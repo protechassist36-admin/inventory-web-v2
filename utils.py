@@ -4,6 +4,37 @@ from datetime import datetime
 from typing import Union, Tuple, List, Dict
 from config import CURRENCY, CURRENCY_SYMBOL
 
+import csv
+import os
+from tkinter import filedialog, messagebox
+
+def export_to_csv(data: List[Dict], filename_prefix: str) -> bool:
+    """Export list of dictionaries to a CSV file"""
+    if not data:
+        messagebox.showwarning("Export Warning", "No data available to export.")
+        return False
+        
+    file_path = filedialog.asksaveasfilename(
+        defaultextension=".csv",
+        filetypes=[("CSV files", "*.csv")],
+        initialfile=f"{filename_prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    )
+    
+    if not file_path:
+        return False
+        
+    try:
+        keys = data[0].keys()
+        with open(file_path, 'w', newline='', encoding='utf-8') as output_file:
+            dict_writer = csv.DictWriter(output_file, fieldnames=keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(data)
+        messagebox.showinfo("Export Success", f"Data successfully exported to {os.path.basename(file_path)}")
+        return True
+    except Exception as e:
+        messagebox.showerror("Export Error", f"An error occurred during export: {str(e)}")
+        return False
+
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt algorithm"""
     # Generate a salt and hash the password

@@ -67,6 +67,10 @@ class UsersWindow(ctk.CTkFrame):
         self.tree = ttk.Treeview(self.tree_frame, columns=("ID", "Username", "Role"), show="headings")
         self.tree.pack(fill="both", expand=True)
 
+        # Bind events
+        self.tree.bind("<Double-1>", lambda e: self.view_user_details())
+        self.tree.bind("<Button-3>", self.show_context_menu)
+
         # Define headings
         self.tree.heading("ID", text="ID")
         self.tree.heading("Username", text="Username")
@@ -84,6 +88,92 @@ class UsersWindow(ctk.CTkFrame):
 
         # Load initial data
         self.refresh_users()
+
+    def get_db_connection(self):
+        """Create and return a database connection"""
+        try:
+            connection = pymysql.connect(
+                host='localhost',
+                user='root',
+                password='Trovegs35',
+                database='inventory_db'
+            )
+            return connection
+        except pymysql.Error as e:
+            messagebox.showerror("Database Error", f"Error connecting to database: {e}")
+            return None
+
+    def show_context_menu(self, event):
+        """Display right-click context menu"""
+        # Select item on right click
+        item = self.tree.identify_row(event.y)
+        if item:
+            self.tree.selection_set(item)
+            
+            # Create menu
+            menu = tk.Menu(self, tearoff=0)
+            menu.add_command(label="View Details", command=self.view_user_details)
+            menu.add_command(label="Edit User", command=self.update_user)
+            menu.add_command(label="Delete User", command=self.delete_user)
+            menu.add_separator()
+            menu.add_command(label="Refresh List", command=self.refresh_users)
+            
+            # Show menu
+            menu.post(event.x_root, event.y_root)
+
+    def view_user_details(self):
+        """View user details in a read-only window"""
+        selected = self.tree.selection()
+        if not selected:
+            return
+            
+        user_id = self.tree.item(selected[0])["values"][0]
+        
+        connection = self.get_db_connection()
+        if not connection:
+            return
+            
+        try:
+            with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+                cursor.execute("SELECT id, username, role FROM users WHERE id = %s", (user_id,))
+                u = cursor.fetchone()
+                
+            if not u:
+                messagebox.showerror("Error", "User not found")
+                return
+                
+            dialog = ctk.CTkToplevel(self)
+            dialog.title("User Details")
+            dialog.geometry("400x400")
+            dialog.transient(self)
+            dialog.grab_set()
+            
+            main_frame = ctk.CTkFrame(dialog)
+            main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+            
+            ctk.CTkLabel(main_frame, text="👥 User Information", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(0, 20))
+            
+            def add_detail(label, value):
+                f = ctk.CTkFrame(main_frame, fg_color="transparent")
+                f.pack(fill="x", pady=5)
+                ctk.CTkLabel(f, text=label, width=120, anchor="w", font=ctk.CTkFont(weight="bold")).pack(side="left")
+                ctk.CTkLabel(f, text=str(value), anchor="w").pack(side="left", fill="x", expand=True)
+
+            add_detail("User ID:", f"USER-{u['id']:03d}")
+            add_detail("Username:", u['username'])
+            add_detail("Role:", u['role'].title())
+            
+            # Action Buttons
+            btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+            btn_frame.pack(fill="x", pady=(30, 0))
+            
+            ctk.CTkButton(btn_frame, text="Edit User", command=lambda: [dialog.destroy(), self.update_user()], fg_color="orange").pack(side="left", padx=10, fill="x", expand=True)
+            ctk.CTkButton(btn_frame, text="Close", command=dialog.destroy).pack(side="left", padx=10, fill="x", expand=True)
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        finally:
+            connection.close()
 
     def refresh_users(self):
         """Load all users from database into treeview"""

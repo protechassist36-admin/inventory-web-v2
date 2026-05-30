@@ -1,0 +1,736 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { usePOSStore } from "@/store/use-pos-store";
+import { useOfflineSync } from "@/hooks/use-offline-sync";
+import { db } from "@/lib/db";
+import { useLiveQuery } from "dexie-react-hooks";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  ShoppingCart, 
+  Trash2, 
+  X,
+  Plus, 
+  Minus, 
+  Search, 
+  RefreshCw,
+  LayoutGrid,
+  List,
+  Package,
+  CheckCircle2,
+  Printer,
+  Download,
+  Zap,
+  ChevronRight,
+  Info,
+  TrendingUp,
+  BarChart3,
+  Calculator,
+  ShieldCheck,
+  User,
+  Banknote,
+  Receipt,
+  AlertCircle,
+  Clock,
+  Store,
+  Wallet,
+  Smartphone,
+  CreditCard as CardIcon,
+  ArrowRight,
+  ChevronDown,
+  History,
+  Activity
+} from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { createSale } from "@/lib/actions/sale";
+import { getCustomers } from "@/lib/actions/customer";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { 
+  Tabs, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { 
+  LineChart, 
+  Line, 
+  ResponsiveContainer, 
+  YAxis, 
+  XAxis, 
+  Tooltip as ChartTooltip 
+} from "recharts";
+
+// Mock data for analytics intelligence
+const salesData = [
+  { time: '08:00', amount: 450 },
+  { time: '10:00', amount: 890 },
+  { time: '12:00', amount: 1200 },
+  { time: '14:00', amount: 760 },
+  { time: '16:00', amount: 1450 },
+  { time: '18:00', amount: 980 },
+];
+
+export default function POSPage() {
+  const { cart, addItem, removeItem, updateQuantity, clearCart } = usePOSStore();
+  const { isOnline, isSyncing, initialSync } = useOfflineSync();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Checkout State
+  const [selectedCustomer, setSelectedCustomer] = useState<string | "WALKIN">("WALKIN");
+  const [paymentStatus, setPaymentStatus] = useState<"PAID" | "UNPAID" | "PARTIAL">("PAID");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "MOBILE_MONEY" | "CARD">("CASH");
+  const [amountPaid, setAmountPaid] = useState<number>(0);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Receipt State
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [lastSale, setLastSale] = useState<any>(null);
+
+  // Time & Shift State
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    fetchCustomers();
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  async function fetchCustomers() {
+    try {
+      const data = await getCustomers();
+      setCustomers(data);
+    } catch (error) {
+      console.error("Failed to load customers:", error);
+    }
+  }
+
+  const products = useLiveQuery(
+    () => {
+      let collection = db.products;
+      if (selectedCategory) {
+        return collection.where("categoryId").equals(selectedCategory).toArray();
+      }
+      return collection.toArray();
+    },
+    [selectedCategory]
+  );
+
+  const categories = useLiveQuery(() => db.categories.toArray());
+
+  const filteredProducts = products?.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (p.barcode && p.barcode.includes(searchQuery))
+  );
+
+  const total = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart]);
+  const itemCount = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
+  const tax = total * 0.15; // 15% GST example
+  const grandTotal = total + tax;
+
+  async function handleCheckout() {
+    if (cart.length === 0) return;
+    
+    setLoading(true);
+    try {
+      if ((paymentStatus === "UNPAID" || paymentStatus === "PARTIAL") && selectedCustomer === "WALKIN") {
+         toast.error("Customer profile required for credit sales.");
+         setLoading(false);
+         return;
+      }
+
+      const saleData = {
+        items: cart.map(item => ({
+          productId: item.id,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          total: item.price * item.quantity,
+        })),
+        totalAmount: grandTotal,
+        paymentMethod,
+        paymentStatus,
+        customerId: selectedCustomer === "WALKIN" ? undefined : selectedCustomer,
+        amountPaid: paymentStatus === "PAID" ? grandTotal : amountPaid,
+      };
+
+      const currentCart = [...cart];
+
+      await db.pendingSales.add({
+        ...saleData,
+        createdAt: Date.now(),
+        synced: isOnline,
+      });
+
+      if (isOnline) {
+        const result = await createSale(saleData);
+        if (result.success) {
+          toast.success("Transaction finalized. Cloud synced.");
+          setLastSale({
+            ...result,
+            items: currentCart,
+            customerName: selectedCustomer === "WALKIN" ? "Walk-in Customer" : customers.find(c => c.id === selectedCustomer)?.name,
+            paymentStatus,
+            paymentMethod,
+            amountPaid: paymentStatus === "PAID" ? grandTotal : amountPaid,
+          });
+          setIsReceiptOpen(true);
+        }
+      } else {
+        toast.warning("Saved locally. Will sync when back online.");
+        setLastSale({
+            invoiceNumber: `LOCAL-${Date.now()}`,
+            createdAt: new Date().toISOString(),
+            totalAmount: grandTotal,
+            items: currentCart,
+            customerName: selectedCustomer === "WALKIN" ? "Walk-in Customer" : customers.find(c => c.id === selectedCustomer)?.name,
+            paymentStatus,
+            paymentMethod,
+            amountPaid: paymentStatus === "PAID" ? grandTotal : amountPaid,
+        });
+        setIsReceiptOpen(true);
+      }
+      
+      clearCart();
+      setSelectedCustomer("WALKIN");
+      setPaymentStatus("PAID");
+      setAmountPaid(0);
+    } catch (error) {
+      console.error(error);
+      toast.error("Checkout failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-white text-slate-900 rounded-xl border border-slate-200 overflow-hidden shadow-sm relative">
+      
+      {/* BACKGROUND DECOR */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+      {/* PROFESSIONAL HEADER */}
+      <header className="p-4 bg-white border-b border-slate-200 flex flex-col md:flex-row justify-between items-center shrink-0 z-20 gap-4">
+        <div className="flex items-center gap-4">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-md cursor-pointer"
+          >
+            <ShoppingCart className="h-6 w-6 text-white" />
+          </motion.div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-slate-900">Point of Sale</h1>
+              <div className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Enterprise</div>
+            </div>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5 flex items-center gap-2">
+              <CheckCircle2 className="h-3 w-3 text-emerald-500" /> System Synchronized • {format(currentTime, "PPP")}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* Live Clock & Shift Info */}
+          <div className="hidden xl:flex items-center gap-4 pr-4 border-r border-slate-200">
+            <div className="text-right">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Active Session</div>
+              <div className="text-sm font-bold text-slate-900 mt-1">Morning Shift Alpha</div>
+            </div>
+            <div className="h-10 w-10 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-200">
+              <Clock className="h-5 w-5 text-blue-500" />
+            </div>
+            <div className="text-lg font-bold text-slate-900 tracking-tight tabular-nums">
+              {format(currentTime, "HH:mm:ss")}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-all group">
+              <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center">
+                <Store className="h-4 w-4 text-slate-600" />
+              </div>
+              <div className="text-left">
+                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Branch</div>
+                <div className="text-xs font-bold text-slate-900">Main Terminal</div>
+              </div>
+              <ChevronDown className="h-4 w-4 text-slate-400 ml-1" />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={initialSync} 
+                disabled={isSyncing} 
+                className="h-10 px-4 rounded-xl border-slate-200 bg-white text-slate-700 font-bold text-[10px] uppercase tracking-wider gap-2 hover:bg-slate-50 transition-all"
+              >
+                <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
+                Sync
+              </Button>
+              <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition-all">
+                <User className="h-5 w-5 text-slate-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden relative z-10">
+        
+        {/* LEFT COLUMN: CATALOG & CART (70%) */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+          
+          {/* SEARCH & FILTERS */}
+          <div className="p-6 pb-2 space-y-4 shrink-0">
+            <div className="flex gap-4">
+              <div className="flex-1 relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <Input 
+                  placeholder="Search products or scan barcode..." 
+                  className="h-12 pl-12 pr-4 rounded-xl border-slate-200 bg-white text-slate-900 shadow-sm focus:ring-blue-500/10 transition-all placeholder:text-slate-400" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className={cn("h-10 w-10 rounded-lg transition-all", viewMode === 'grid' ? "bg-slate-100 text-slate-900" : "text-slate-500")}
+                  onClick={() => setViewMode('grid')}
+                >
+                  <LayoutGrid className="h-5 w-5" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className={cn("h-10 w-10 rounded-lg transition-all", viewMode === 'list' ? "bg-slate-100 text-slate-900" : "text-slate-500")}
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+              <Button 
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "rounded-full px-6 h-9 font-bold text-[10px] uppercase tracking-wider transition-all",
+                  selectedCategory === null ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                )}
+                onClick={() => setSelectedCategory(null)}
+              >
+                All Products
+              </Button>
+              {categories?.map((cat) => (
+                <Button 
+                  key={cat.id}
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "rounded-full px-6 h-9 font-bold text-[10px] uppercase tracking-wider transition-all",
+                    selectedCategory === cat.id ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  )}
+                  onClick={() => setSelectedCategory(cat.id)}
+                >
+                  {cat.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          {/* CATALOG AREA */}
+          <div className="flex-1 overflow-y-auto px-6 pb-6 custom-scrollbar">
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                {!products ? (
+                  Array.from({ length: 12 }).map((_, i) => <div key={i} className="aspect-square bg-slate-100 animate-pulse rounded-xl" />)
+                ) : filteredProducts?.length === 0 ? (
+                  <div className="col-span-full text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
+                    <Package className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-slate-400">No products found</h3>
+                    <p className="text-sm text-slate-400 mt-1">Try a different search term or category.</p>
+                  </div>
+                ) : (
+                  filteredProducts?.map((p) => (
+                    <motion.div 
+                      layout
+                      whileHover={{ y: -4 }}
+                      whileTap={{ scale: 0.98 }}
+                      key={p.id}
+                      className="group"
+                    >
+                      <div 
+                        className="cursor-pointer bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition-all h-full flex flex-col p-3 shadow-sm relative overflow-hidden" 
+                        onClick={() => addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1 })}
+                      >
+                        <div className="aspect-square bg-slate-50 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
+                          <Package className="h-8 w-8 text-slate-200 group-hover:text-blue-200 transition-colors" />
+                          {p.stockQuantity <= 5 && (
+                             <div className="absolute top-2 right-2 bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">Low Stock</div>
+                           )}
+                        </div>
+
+                        <div className="flex-1 flex flex-col">
+                          <h3 className="font-bold text-[11px] text-slate-900 uppercase tracking-tight line-clamp-2 leading-tight mb-1">{p.name}</h3>
+                          <div className="mt-auto">
+                            <div className="text-blue-600 font-bold text-sm">Le {p.unitPrice.toLocaleString()}</div>
+                            <div className="text-[9px] font-bold text-slate-400 uppercase mt-1">{p.stockQuantity} in stock</div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredProducts?.map((p) => (
+                  <motion.div 
+                    whileHover={{ x: 4, backgroundColor: 'rgba(248, 250, 252, 1)' }}
+                    whileTap={{ scale: 0.99 }}
+                    key={p.id} 
+                    className="flex items-center gap-4 p-3 bg-white rounded-xl border border-slate-200 cursor-pointer group transition-all"
+                    onClick={() => addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1 })}
+                  >
+                     <div className="h-12 w-12 bg-slate-50 rounded-lg flex items-center justify-center shrink-0 border border-slate-100">
+                        <Package className="h-6 w-6 text-slate-200" />
+                     </div>
+                     <div className="flex-1 min-w-0">
+                        <div className="font-bold text-slate-900 uppercase text-xs truncate">{p.name}</div>
+                        <div className="text-[10px] text-slate-400 font-medium">SKU: {p.sku || 'N/A'} • {p.stockQuantity} in stock</div>
+                     </div>
+                     <div className="font-bold text-blue-600 text-sm">Le {p.unitPrice.toLocaleString()}</div>
+                     <div className="h-8 w-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                        <Plus className="h-4 w-4" />
+                     </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: CART & CHECKOUT (30%) */}
+        <div className="w-full lg:w-[400px] bg-white border-l border-slate-200 flex flex-col shrink-0 relative z-20">
+          
+          {/* SUMMARY MINI-CHART (Simplified) */}
+          <div className="p-6 bg-slate-50 border-b border-slate-200">
+            <div className="flex items-center justify-between mb-4">
+               <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider">Sales Today</h4>
+               </div>
+               <div className="text-emerald-600 font-bold text-xs">Le 24,500.00</div>
+            </div>
+
+            <div className="h-16 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={salesData}>
+                  <Line 
+                    type="monotone" 
+                    dataKey="amount" 
+                    stroke="#2563eb" 
+                    strokeWidth={2} 
+                    dot={false} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          {/* CART LIST */}
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-slate-400" />
+                <h5 className="font-bold text-[10px] text-slate-400 uppercase tracking-wider">Current Cart</h5>
+              </div>
+              {cart.length > 0 && (
+                <button onClick={clearCart} className="text-[9px] font-bold text-rose-500 uppercase tracking-wider hover:underline flex items-center gap-1.5">
+                   <Trash2 size={12} /> Clear Cart
+                </button>
+              )}
+            </div>
+
+            {cart.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-10">
+                <div className="h-20 w-20 rounded-full border border-dashed border-slate-200 flex items-center justify-center mb-4">
+                  <ShoppingCart className="h-8 w-8 text-slate-200" />
+                </div>
+                <h6 className="font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-2">Cart is empty</h6>
+                <p className="text-[9px] text-slate-400 font-medium uppercase tracking-wider max-w-[200px]">Select products from the catalog to start a sale.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <AnimatePresence mode="popLayout">
+                  {cart.map((item) => (
+                    <motion.div 
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      key={item.id} 
+                      className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm space-y-3 group"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h6 className="font-bold text-slate-900 uppercase tracking-tight text-[11px] leading-tight mb-1 truncate">{item.name}</h6>
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                             Le {item.price.toLocaleString()} per unit
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => removeItem(item.id)}
+                          className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                      
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="text-lg font-bold text-slate-900 tracking-tight">
+                          Le {(item.price * item.quantity).toLocaleString()}
+                        </div>
+                        
+                        <div className="flex items-center gap-1 p-1 bg-slate-50 rounded-lg border border-slate-100">
+                          <button 
+                            type="button"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="h-8 w-8 rounded-md bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition-all active:scale-95"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          
+                          <div className="w-10 text-center font-bold text-sm text-slate-900">
+                            {item.quantity}
+                          </div>
+
+                          <button 
+                            type="button"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="h-8 w-8 rounded-md bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-all active:scale-95"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+          
+          {/* CHECKOUT SECTION */}
+          <div className="p-6 bg-white border-t border-slate-200 space-y-6 z-30 shadow-md">
+            
+            {cart.length > 0 && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer</Label>
+                    <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+                      <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white text-slate-900 shadow-sm px-3">
+                        <SelectValue placeholder="Walk-in Customer" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 bg-white text-slate-900 shadow-xl">
+                        <SelectItem value="WALKIN" className="font-bold">Walk-in Customer</SelectItem>
+                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment</Label>
+                    <Select value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)}>
+                      <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white text-slate-900 shadow-sm px-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 bg-white text-slate-900 shadow-xl">
+                        <SelectItem value="CASH">Cash</SelectItem>
+                        <SelectItem value="MOBILE_MONEY">Mobile Money</SelectItem>
+                        <SelectItem value="CARD">Bank Card</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment Status</Label>
+                  <Tabs value={paymentStatus} onValueChange={(val: any) => setPaymentStatus(val)} className="w-full">
+                    <TabsList className="grid grid-cols-3 h-11 rounded-lg bg-slate-100 border border-slate-200 p-1">
+                      <TabsTrigger value="PAID" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all">Fully Paid</TabsTrigger>
+                      <TabsTrigger value="PARTIAL" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm transition-all">Partial</TabsTrigger>
+                      <TabsTrigger value="UNPAID" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-sm transition-all">Credit/Unpaid</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+
+                {/* TOTALS BOX */}
+                <div className="p-5 bg-slate-50 rounded-2xl space-y-3 border border-slate-200 shadow-inner relative overflow-hidden">
+                  <div className="space-y-2 relative z-10">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                       <span>Subtotal</span>
+                       <span className="text-slate-900 font-bold">Le {total.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                       <span>GST (15%)</span>
+                       <span className="text-slate-900 font-bold">Le {tax.toLocaleString()}</span>
+                    </div>
+                    <div className="h-[1px] bg-slate-200 w-full my-1" />
+                    <div className="flex justify-between items-end">
+                       <div className="space-y-1">
+                          <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Grand Total</div>
+                          <div className="text-3xl font-bold text-slate-900 tracking-tight">Le {grandTotal.toLocaleString()}</div>
+                       </div>
+                       <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
+                          <CheckCircle2 className="h-6 w-6 text-white" />
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 w-full">
+              <Button 
+                variant="outline" 
+                className="h-14 w-14 rounded-xl border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-500 transition-all"
+                onClick={clearCart}
+              >
+                <Trash2 className="h-6 w-6" />
+              </Button>
+              <Button 
+                disabled={loading || cart.length === 0}
+                onClick={handleCheckout}
+                className="flex-1 h-14 rounded-xl font-bold text-sm uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-3"
+              >
+                {loading ? (
+                  <RefreshCw className="h-6 w-6 animate-spin" />
+                ) : (
+                  <>
+                    <span>Checkout Now</span>
+                    <ArrowRight className="h-5 w-5" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SALES RECEIPT DIALOG */}
+      <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
+        <DialogContent className="sm:max-w-[450px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden bg-white text-slate-900 animate-in zoom-in-95 duration-300">
+           <div className="bg-blue-600 p-8 text-white text-center relative overflow-hidden print:hidden">
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="bg-white/20 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg relative z-10"
+              >
+                 <CheckCircle2 className="h-8 w-8 text-white" />
+              </motion.div>
+              <h3 className="text-2xl font-bold mb-1 uppercase tracking-tight relative z-10">Sale Completed</h3>
+              <p className="text-white/80 font-medium text-[10px] uppercase tracking-widest relative z-10">Invoice: {lastSale?.invoiceNumber}</p>
+           </div>
+
+           <div id="receipt-content" className="p-8 space-y-6 bg-white print:p-0 print:text-black">
+              <div className="text-center space-y-2">
+                 <h4 className="font-bold text-xl uppercase tracking-tight">Protech Assist SL Limited</h4>
+                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    {format(new Date(), "PPP p")}
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 border-y border-slate-100 py-4">
+                 <div className="space-y-1">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Served By</span>
+                    <span className="text-xs font-bold text-slate-900 uppercase">Administrator</span>
+                 </div>
+                 <div className="space-y-1 text-right">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Customer</span>
+                    <span className="text-xs font-bold text-slate-900 uppercase">{lastSale?.customerName}</span>
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                 {lastSale?.items.map((item: any, i: number) => (
+                    <div key={i} className="flex justify-between items-start gap-4">
+                       <div className="flex-1">
+                          <div className="text-xs font-bold text-slate-900 uppercase leading-tight mb-1">{item.name}</div>
+                          <div className="text-[10px] text-slate-400 font-medium">
+                             {item.quantity} x Le {item.price.toLocaleString()}
+                          </div>
+                       </div>
+                       <div className="text-sm font-bold text-slate-900">
+                          Le {(item.price * item.quantity).toLocaleString()}
+                       </div>
+                    </div>
+                 ))}
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 space-y-2">
+                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <span>Subtotal</span>
+                    <span>Le {((lastSale?.totalAmount || 0) / 1.15).toLocaleString()}</span>
+                 </div>
+                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <span>Tax (15%)</span>
+                    <span>Le {((lastSale?.totalAmount || 0) - ((lastSale?.totalAmount || 0) / 1.15)).toLocaleString()}</span>
+                 </div>
+                 <div className="flex justify-between items-end pt-2">
+                    <div className="space-y-1">
+                       <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Total Amount</span>
+                       <div className="text-3xl font-bold text-slate-900">Le {lastSale?.totalAmount.toLocaleString()}</div>
+                    </div>
+                    <div className="h-10 w-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
+                       {lastSale?.paymentMethod === 'CASH' ? <Wallet className="h-5 w-5 text-blue-500" /> : <Smartphone className="h-5 w-5 text-emerald-500" />}
+                    </div>
+                 </div>
+              </div>
+
+              <div className="text-center pt-6 space-y-4 border-t border-slate-100">
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Thank you for your business</p>
+                 <div className="text-[8px] font-medium text-slate-300 uppercase tracking-widest">Digital ID: {Math.random().toString(36).substring(2, 10).toUpperCase()}</div>
+              </div>
+           </div>
+
+           <div className="p-8 pt-0 flex gap-3 print:hidden relative z-10">
+              <Button onClick={() => window.print()} className="flex-1 h-12 rounded-xl font-bold uppercase text-[10px] tracking-wider bg-slate-900 text-white hover:bg-slate-800 transition-all flex gap-2">
+                 <Printer className="h-4 w-4" /> Print Receipt
+              </Button>
+              <Button variant="outline" className="h-12 w-12 rounded-xl border-slate-200 bg-white hover:bg-slate-50 transition-all flex items-center justify-center">
+                 <Download className="h-4 w-4 text-slate-400" />
+              </Button>
+           </div>
+           
+           <Button 
+            variant="ghost" 
+            className="w-full h-12 rounded-none border-t border-slate-100 font-bold text-[10px] uppercase tracking-wider text-slate-400 hover:text-slate-600 hover:bg-slate-50 print:hidden transition-all" 
+            onClick={() => setIsReceiptOpen(false)}
+          >
+              Close Receipt
+           </Button>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

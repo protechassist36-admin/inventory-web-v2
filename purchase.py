@@ -83,9 +83,96 @@ class PurchaseWindow(ctk.CTkFrame):
         scrollbar.pack(side="right", fill="y")
         self.tree.configure(yscrollcommand=scrollbar.set)
         
+        # Bind events
+        self.tree.bind("<Double-1>", lambda e: self.view_purchase_details())
+        self.tree.bind("<Button-3>", self.show_context_menu)
+        
         # Load initial data
         self.refresh_purchases()
-    
+
+    def show_context_menu(self, event):
+        """Display right-click context menu"""
+        # Select item on right click
+        item = self.tree.identify_row(event.y)
+        if item:
+            self.tree.selection_set(item)
+            
+            # Create menu
+            menu = tk.Menu(self, tearoff=0)
+            menu.add_command(label="View Purchase Details", command=self.view_purchase_details)
+            menu.add_command(label="Edit Purchase", command=self.update_purchase)
+            menu.add_command(label="Delete Purchase", command=self.delete_purchase)
+            menu.add_separator()
+            menu.add_command(label="Refresh List", command=self.refresh_purchases)
+            
+            # Show menu
+            menu.post(event.x_root, event.y_root)
+
+    def view_purchase_details(self):
+        """View purchase details in a read-only window"""
+        selected = self.tree.selection()
+        if not selected:
+            return
+            
+        pur_id = self.tree.item(selected[0])["values"][0]
+        
+        connection = self.get_db_connection()
+        if not connection:
+            return
+            
+        try:
+            with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+                cursor.execute("""
+                    SELECT pu.*, p.name as product_name, s.name as supplier_name 
+                    FROM purchases pu
+                    LEFT JOIN products p ON pu.product_id = p.id
+                    LEFT JOIN suppliers s ON pu.supplier_id = s.id
+                    WHERE pu.id = %s
+                """, (pur_id,))
+                p = cursor.fetchone()
+                
+            if not p:
+                messagebox.showerror("Error", "Purchase record not found")
+                return
+                
+            dialog = ctk.CTkToplevel(self)
+            dialog.title("Purchase Details")
+            dialog.geometry("450x500")
+            dialog.transient(self)
+            dialog.grab_set()
+            
+            main_frame = ctk.CTkFrame(dialog)
+            main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+            
+            ctk.CTkLabel(main_frame, text="🛒 Purchase Information", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(0, 20))
+            
+            def add_detail(label, value):
+                f = ctk.CTkFrame(main_frame, fg_color="transparent")
+                f.pack(fill="x", pady=5)
+                ctk.CTkLabel(f, text=label, width=150, anchor="w", font=ctk.CTkFont(weight="bold")).pack(side="left")
+                ctk.CTkLabel(f, text=str(value), anchor="w").pack(side="left", fill="x", expand=True)
+
+            from utils import format_currency
+            add_detail("Purchase ID:", f"PUR-{p['id']:05d}")
+            add_detail("Product:", p['product_name'] or "N/A")
+            add_detail("Supplier:", p['supplier_name'] or "N/A")
+            add_detail("Quantity:", p['quantity'])
+            add_detail("Unit Price:", format_currency(p['unit_cost']))
+            add_detail("Total Cost:", format_currency(p['total_cost']))
+            add_detail("Date:", p['purchase_date'])
+            
+            # Action Buttons
+            btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+            btn_frame.pack(fill="x", pady=(30, 0))
+            
+            ctk.CTkButton(btn_frame, text="Edit Purchase", command=lambda: [dialog.destroy(), self.update_purchase()], fg_color="orange").pack(side="left", padx=10, fill="x", expand=True)
+            ctk.CTkButton(btn_frame, text="Close", command=dialog.destroy).pack(side="left", padx=10, fill="x", expand=True)
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        finally:
+            connection.close()
+
     def get_db_connection(self):
         """Create and return a database connection"""
         try:
@@ -187,6 +274,22 @@ class PurchaseWindow(ctk.CTkFrame):
         finally:
             connection.close()
     
+    def get_suppliers(self):
+        """Get all suppliers from database for dropdown"""
+        connection = self.get_db_connection()
+        if not connection:
+            return []
+            
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT id, name FROM suppliers WHERE status = 'active'")
+                return cursor.fetchall()
+        except pymysql.Error as e:
+            messagebox.showerror("Database Error", f"Error fetching suppliers: {e}")
+            return []
+        finally:
+            connection.close()
+    
     def add_purchase(self):
         """Open dialog to add a new purchase"""
         dialog = ctk.CTkToplevel(self.container)
@@ -215,6 +318,10 @@ class PurchaseWindow(ctk.CTkFrame):
         # Get products for dropdown
         products = self.get_products()
         product_options = {f"{p[1]} (Stock: {p[3]}, Price: {format_currency(p[2])})": p[0] for p in products}
+
+        # Get suppliers for dropdown
+        suppliers = self.get_suppliers()
+        supplier_options = {s[1]: s[0] for s in suppliers}
         
         # Form fields
         fields = {}
@@ -227,6 +334,15 @@ class PurchaseWindow(ctk.CTkFrame):
         product_dropdown = ctk.CTkOptionMenu(product_frame, variable=product_var, values=list(product_options.keys()))
         product_dropdown.pack(side="left", fill="x", expand=True)
         fields["product"] = (product_var, product_options)
+
+        # Supplier selection
+        supplier_frame = ctk.CTkFrame(main_frame)
+        supplier_frame.pack(fill="x", pady=5)
+        ctk.CTkLabel(supplier_frame, text="Supplier:", width=100).pack(side="left", padx=(0, 10))
+        supplier_var = tk.StringVar()
+        supplier_dropdown = ctk.CTkOptionMenu(supplier_frame, variable=supplier_var, values=list(supplier_options.keys()))
+        supplier_dropdown.pack(side="left", fill="x", expand=True)
+        fields["supplier"] = (supplier_var, supplier_options)
         
         # Quantity field
         quantity_frame = ctk.CTkFrame(main_frame)
@@ -286,11 +402,13 @@ class PurchaseWindow(ctk.CTkFrame):
             try:
                 # Get values from form
                 product_key = product_var.get()
-                if not product_key:
-                    messagebox.showerror("Input Error", "Please select a product!")
+                supplier_key = supplier_var.get()
+                if not product_key or not supplier_key:
+                    messagebox.showerror("Input Error", "Please select a product and supplier!")
                     return
                     
                 product_id = product_options[product_key]
+                supplier_id = supplier_options[supplier_key]
                 quantity = int(quantity_entry.get().strip())
                 price = float(price_entry.get().strip())
                 
@@ -304,6 +422,7 @@ class PurchaseWindow(ctk.CTkFrame):
                 
                 # Calculate total amount
                 total_amount = quantity * price
+                purchase_number = f"PUR-{datetime.now().strftime('%Y%m%d%H%M%S')}"
                 
                 connection = self.get_db_connection()
                 if not connection:
@@ -311,10 +430,10 @@ class PurchaseWindow(ctk.CTkFrame):
                 
                 try:
                     with connection.cursor() as cursor:
-                        # Insert purchase record - include product_id column
+                        # Insert purchase record - include product_id, supplier_id, purchase_number
                         cursor.execute(
-                            "INSERT INTO purchases (product_id, quantity, total_amount, date) VALUES (%s, %s, %s, %s)",
-                            (product_id, quantity, total_amount, datetime.now())
+                            "INSERT INTO purchases (purchase_number, supplier_id, product_id, quantity, unit_cost, total_amount, date) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                            (purchase_number, supplier_id, product_id, quantity, price, total_amount, datetime.now())
                         )
                         
                         # Update product quantity in stock

@@ -63,6 +63,10 @@ class CategoriesWindow(ctk.CTkFrame):
         self.tree = ttk.Treeview(self.tree_frame, columns=("ID", "Name", "Description"), show="headings")
         self.tree.pack(fill="both", expand=True)
         
+        # Bind events
+        self.tree.bind("<Double-1>", lambda e: self.update_category())
+        self.tree.bind("<Button-3>", self.show_context_menu)
+        
         # Define headings
         self.tree.heading("ID", text="ID")
         self.tree.heading("Name", text="Name")
@@ -97,6 +101,78 @@ class CategoriesWindow(ctk.CTkFrame):
             messagebox.showerror("Database Error", f"Error connecting to database: {e}")
             return None
     
+    def show_context_menu(self, event):
+        """Display right-click context menu"""
+        # Select item on right click
+        item = self.tree.identify_row(event.y)
+        if item:
+            self.tree.selection_set(item)
+            
+            # Create menu
+            menu = tk.Menu(self, tearoff=0)
+            menu.add_command(label="View Details", command=self.view_category_details)
+            menu.add_command(label="Edit Category", command=self.update_category)
+            menu.add_command(label="Delete Category", command=self.delete_category)
+            menu.add_separator()
+            menu.add_command(label="Refresh List", command=self.refresh_categories)
+            
+            # Show menu
+            menu.post(event.x_root, event.y_root)
+
+    def view_category_details(self):
+        """View category details in a read-only window"""
+        selected = self.tree.selection()
+        if not selected:
+            return
+            
+        cat_id = self.tree.item(selected[0])["values"][0]
+        
+        connection = self.get_db_connection()
+        if not connection:
+            return
+            
+        try:
+            with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+                cursor.execute("SELECT * FROM categories WHERE id = %s", (cat_id,))
+                c = cursor.fetchone()
+                
+            if not c:
+                messagebox.showerror("Error", "Category not found")
+                return
+                
+            dialog = ctk.CTkToplevel(self)
+            dialog.title("Category Details")
+            dialog.geometry("400x350")
+            dialog.transient(self)
+            dialog.grab_set()
+            
+            main_frame = ctk.CTkFrame(dialog)
+            main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+            
+            ctk.CTkLabel(main_frame, text="📁 Category Information", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(0, 20))
+            
+            def add_detail(label, value):
+                f = ctk.CTkFrame(main_frame, fg_color="transparent")
+                f.pack(fill="x", pady=5)
+                ctk.CTkLabel(f, text=label, width=120, anchor="w", font=ctk.CTkFont(weight="bold")).pack(side="left")
+                ctk.CTkLabel(f, text=str(value), anchor="w").pack(side="left", fill="x", expand=True)
+
+            add_detail("Category ID:", f"CAT-{c['id']:03d}")
+            add_detail("Name:", c['name'])
+            add_detail("Description:", c['description'] or "No description")
+            
+            # Action Buttons
+            btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+            btn_frame.pack(fill="x", pady=(30, 0))
+            
+            ctk.CTkButton(btn_frame, text="Edit Category", command=lambda: [dialog.destroy(), self.update_category()], fg_color="orange").pack(side="left", padx=10, fill="x", expand=True)
+            ctk.CTkButton(btn_frame, text="Close", command=dialog.destroy).pack(side="left", padx=10, fill="x", expand=True)
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        finally:
+            connection.close()
+
     def refresh_categories(self):
         """Load all categories from database into treeview"""
         # Clear existing items

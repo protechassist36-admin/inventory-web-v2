@@ -6,6 +6,8 @@ import time
 from database import Database
 from config import GUI_CONFIG, CURRENCY_SYMBOL
 from utils import format_datetime, format_currency
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class Dashboard:
     def __init__(self, user_data):
@@ -40,6 +42,10 @@ class Dashboard:
         self.notification_window = None
         
         # Create UI components
+        self.sidebar = None
+        self.main_content = None
+        self.current_window = None
+        
         self.create_sidebar()
         self.create_main_content()
         self.create_footer()
@@ -51,29 +57,6 @@ class Dashboard:
         
         # Bind window destroy event
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-
-
-        # Add this method to Dashboard class
-    def handle_category_change(self):
-        """Handle category changes by refreshing dashboard"""
-        self.show_dashboard()
-
-    # Modify the show_categories method in Dashboard class
-    def show_categories(self):
-        try:
-            from categories import CategoriesWindow
-            # Pass the callback function to CategoriesWindow
-            CategoriesWindow(self.main_content, self.user_data, self.handle_category_change)
-        except ImportError:
-            self.show_error("Categories module not found")
-        except Exception as e:
-            self.show_error(f"Error loading categories: {str(e)}")
-
-
-
-
-
 
     def check_expiry_notifications(self):
         """Check for products nearing expiry and create notifications"""
@@ -647,20 +630,313 @@ class Dashboard:
         self.logout_btn.grid(row=len(nav_items) + 4, column=0, padx=20, pady=(20, 20))
 
     def create_main_content(self):
-        self.main_content = ctk.CTkFrame(self.root)
+        self.main_content = ctk.CTkScrollableFrame(self.root)
         self.main_content.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
         self.main_content.grid_columnconfigure(0, weight=1)
+        
+        self.create_dashboard_view()
+
+    def create_stat_cards(self):
+        """Create professional styled statistics cards"""
+        # Title for statistics section
+        self.stats_title = ctk.CTkLabel(
+            self.stats_frame,
+            text="📊 Business Performance Overview",
+            font=ctk.CTkFont(size=20, weight="bold")
+        )
+        self.stats_title.grid(row=0, column=0, columnspan=4, pady=(0, 20), sticky="w", padx=10)
+
+        # Card configurations
+        cards_data = [
+            ("📦 Total Products", "products", "green", "0"),
+            ("💰 Total Sales", "sales", "#1E90FF", f"0 {CURRENCY_SYMBOL}"),
+            ("⚠️ Low Stock", "stock", "#FFA500", "0"),
+            ("📅 Expiring Soon", "expiry", "#FF4500", "0")
+        ]
+
+        if self.user_data['role'] == 'admin':
+            cards_data.append(("📋 Purchases (Today)", "purchases", "#9932CC", f"0 {CURRENCY_SYMBOL}"))
+
+        self.cards = {}
+        for i, (label, key, color, default_val) in enumerate(cards_data):
+            row = (i // 4) + 1
+            col = i % 4
+            
+            card = ctk.CTkFrame(self.stats_frame, corner_radius=15, border_width=1, border_color=color)
+            card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+            
+            val_label = ctk.CTkLabel(
+                card,
+                text=default_val,
+                font=ctk.CTkFont(size=28, weight="bold"),
+                text_color=color
+            )
+            val_label.pack(padx=20, pady=(20, 5))
+            
+            title_label = ctk.CTkLabel(
+                card,
+                text=label,
+                font=ctk.CTkFont(size=14, weight="bold")
+            )
+            title_label.pack(padx=20, pady=(0, 20))
+            
+            self.cards[key] = val_label
+
+    def create_dashboard_charts(self):
+        """Create and embed a sales trend chart on the dashboard"""
+        chart_container = ctk.CTkFrame(self.main_content)
+        chart_container.grid(row=4, column=0, sticky="nsew", padx=20, pady=10)
+        chart_container.grid_columnconfigure(0, weight=1)
+
+        title = ctk.CTkLabel(
+            chart_container,
+            text="📈 7-Day Sales Trend",
+            font=ctk.CTkFont(size=18, weight="bold")
+        )
+        title.pack(pady=10, anchor="w", padx=20)
+
+        fig = Figure(figsize=(8, 3), dpi=100)
+        ax = fig.add_subplot(111)
+        
+        # Get data
+        try:
+            sales_data = self.db.execute_query(
+                """
+                SELECT DATE(created_at) as date, SUM(total_amount) as total
+                FROM sales
+                WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY DATE(created_at)
+                """
+            )
+            
+            if sales_data:
+                dates = [str(item['date']) for item in sales_data]
+                totals = [float(item['total']) for item in sales_data]
+                
+                ax.plot(dates, totals, marker='o', linestyle='-', color='#6C5CE7', linewidth=2)
+                ax.fill_between(dates, totals, alpha=0.2, color='#6C5CE7')
+                
+                ax.set_ylabel(f'Sales ({CURRENCY_SYMBOL})', fontsize=8)
+                ax.tick_params(axis='both', which='major', labelsize=8)
+                fig.tight_layout()
+            else:
+                ax.text(0.5, 0.5, 'No sales data for the last 7 days', 
+                        horizontalalignment='center', verticalalignment='center')
+        except Exception as e:
+            print(f"Chart error: {e}")
+            ax.text(0.5, 0.5, f'Error loading chart: {str(e)}', 
+                    horizontalalignment='center', verticalalignment='center')
+
+        canvas = FigureCanvasTkAgg(fig, master=chart_container)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+    def create_activities_table(self):
+        self.activities_header = ctk.CTkLabel(
+            self.activities_frame,
+            text="Recent Activities",
+            font=ctk.CTkFont(size=18, weight="bold")
+        )
+        self.activities_header.pack(pady=(10, 5), padx=20, anchor="w")
+        
+        self.activities_scroll = ctk.CTkScrollableFrame(self.activities_frame)
+        self.activities_scroll.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        header_frame = ctk.CTkFrame(self.activities_scroll)
+        header_frame.pack(fill="x", padx=5, pady=2)
+        
+        date_header = ctk.CTkLabel(
+            header_frame,
+            text="Date",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        date_header.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        
+        type_header = ctk.CTkLabel(
+            header_frame,
+            text="Type",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        type_header.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        
+        details_header = ctk.CTkLabel(
+            header_frame,
+            text="Details",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        details_header.grid(row=0, column=2, padx=10, pady=5, sticky="w")
+
+    def load_dashboard_stats(self):
+        """Update the professional statistics cards with real data"""
+        try:
+            # 1. Total Products
+            products_count = self.db.execute_query("SELECT COUNT(*) as count FROM products")[0]['count']
+            if 'products' in self.cards:
+                self.cards['products'].configure(text=str(products_count))
+            
+            # 2. Total Sales
+            total_sales = self.db.execute_query(
+                "SELECT COALESCE(SUM(total_amount), 0) as total FROM sales"
+            )[0]['total']
+            if 'sales' in self.cards:
+                self.cards['sales'].configure(text=format_currency(total_sales))
+            
+            # 3. Low Stock Items
+            low_stock = self.db.execute_query(
+                "SELECT COUNT(*) as count FROM stock WHERE quantity > 0 AND quantity <= min_quantity"
+            )[0]['count']
+            if 'stock' in self.cards:
+                self.cards['stock'].configure(text=str(low_stock))
+            
+            # 4. Expiring Soon
+            seven_days_from_now = datetime.now().date() + timedelta(days=7)
+            expiring_count = self.db.execute_query(
+                """
+                SELECT COUNT(*) as count 
+                FROM products p
+                LEFT JOIN stock s ON p.id = s.product_id
+                WHERE p.expiry_date IS NOT NULL 
+                AND p.expiry_date <= %s
+                AND p.expiry_date >= CURDATE()
+                AND s.quantity > 0
+                """,
+                (seven_days_from_now,)
+            )[0]['count']
+            if 'expiry' in self.cards:
+                self.cards['expiry'].configure(text=str(expiring_count))
+            
+            # 5. Purchases (Admin Only)
+            if self.user_data['role'] == 'admin' and 'purchases' in self.cards:
+                recent_purchases = self.db.execute_query(
+                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM purchases "
+                    "WHERE DATE(date) = CURDATE()"
+                )[0]['total']
+                self.cards['purchases'].configure(text=format_currency(recent_purchases))
+            
+            self.load_recent_activities()
+        except Exception as e:
+            print(f"Error loading dashboard stats: {e}")
+
+    def load_recent_activities(self):
+        for widget in self.activities_scroll.winfo_children():
+            if isinstance(widget, ctk.CTkFrame) and widget != self.activities_scroll.winfo_children()[0]:
+                widget.destroy()
+        
+        activities = self.db.execute_query(
+            """
+            SELECT 
+                'Sale' as activity_type,
+                created_at,
+                CONCAT('Sale #', id) as details
+            FROM sales
+            UNION ALL
+            SELECT 
+                'Purchase' as activity_type,
+                created_at,
+                CONCAT('Purchase #', id) as details
+            FROM purchases
+            ORDER BY created_at DESC
+            LIMIT 10
+            """
+        )
+        
+        for activity in activities:
+            activity_frame = ctk.CTkFrame(self.activities_scroll)
+            activity_frame.pack(fill="x", padx=5, pady=2)
+            
+            date_label = ctk.CTkLabel(
+                activity_frame,
+                text=format_datetime(activity['created_at']),
+                font=ctk.CTkFont(size=11)
+            )
+            date_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+            
+            type_label = ctk.CTkLabel(
+                activity_frame,
+                text=activity['activity_type'],
+                font=ctk.CTkFont(size=11)
+            )
+            type_label.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+            
+            details_label = ctk.CTkLabel(
+                activity_frame,
+                text=activity['details'],
+                font=ctk.CTkFont(size=11)
+            )
+            details_label.grid(row=0, column=2, padx=10, pady=5, sticky="w")
+
+    def clear_main_content(self):
+        for widget in self.main_content.winfo_children():
+            widget.destroy()
+
+    def set_active_nav(self, active_text):
+        """Highlight the active navigation button in the sidebar"""
+        for btn in self.nav_buttons:
+            if btn.cget("text") == active_text:
+                btn.configure(border_width=2, border_color="white")
+            else:
+                btn.configure(border_width=0)
+
+    def show_dashboard(self):
+        print("Debug: Showing Dashboard...")
+        self.set_active_nav("🏠 Dashboard")
+        self.clear_main_content()
+        self.current_window = None # Clear current window reference
+        
+        # Reset main_content grid configuration if needed
+        self.main_content.grid_rowconfigure(0, weight=0)
         self.main_content.grid_rowconfigure(3, weight=1)
         
+        # Re-create dashboard specific widgets
         self.header = ctk.CTkLabel(
             self.main_content,
-            text="Dashboard",
+            text="Dashboard Overview",
             font=ctk.CTkFont(size=24, weight="bold")
         )
         self.header.grid(row=0, column=0, sticky="w", padx=20, pady=(20, 10))
         
+        # Quick Actions
         self.quick_actions_frame = ctk.CTkFrame(self.main_content)
         self.quick_actions_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=2)
+        # ... and so on ... 
+        # Actually, it's better to move the dashboard creation to a separate method
+        self.create_dashboard_view()
+        self.load_dashboard_stats()
+        self.load_recent_activities()
+        self.update_time()
+
+    def create_dashboard_view(self):
+        """Populate main_content with dashboard-specific widgets"""
+        # Greeting and Header
+        current_hour = datetime.now().hour
+        if current_hour < 12: greeting = "Good Morning"
+        elif current_hour < 18: greeting = "Good Afternoon"
+        else: greeting = "Good Evening"
+        
+        username = self.user_data.get('username', 'User')
+        
+        header_frame = ctk.CTkFrame(self.main_content, fg_color="transparent")
+        header_frame.grid(row=0, column=0, sticky="w", padx=20, pady=(20, 10))
+        
+        self.header = ctk.CTkLabel(
+            header_frame,
+            text=f"{greeting}, {username}! 👋",
+            font=ctk.CTkFont(size=28, weight="bold")
+        )
+        self.header.pack(side="left")
+        
+        self.sub_header = ctk.CTkLabel(
+            header_frame,
+            text="Welcome to your professional inventory dashboard.",
+            font=ctk.CTkFont(size=14),
+            text_color="gray"
+        )
+        self.sub_header.pack(side="left", padx=20, pady=(8, 0))
+        
+        self.quick_actions_frame = ctk.CTkFrame(self.main_content)
+        self.quick_actions_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=2)
+        
         self.quick_actions_label = ctk.CTkLabel(
             self.quick_actions_frame,
             text="Quick Actions",
@@ -793,355 +1069,89 @@ class Dashboard:
         self.stats_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
         
         self.create_stat_cards()
+        self.create_dashboard_charts()
         
         self.activities_frame = ctk.CTkFrame(self.main_content)
-        self.activities_frame.grid(row=3, column=0, sticky="nsew", padx=20, pady=10)
+        self.activities_frame.grid(row=5, column=0, sticky="nsew", padx=20, pady=10)
         self.activities_frame.grid_columnconfigure(0, weight=1)
         
         self.create_activities_table()
 
-    def create_stat_cards(self):
-        if self.user_data['role'] == 'admin':
-            self.stats_title = ctk.CTkLabel(
-                self.stats_frame,
-                text="Statistics Overview",
-                font=ctk.CTkFont(size=18, weight="bold")
-            )
-            self.stats_title.grid(row=0, column=0, columnspan=4, pady=(0, 10))
-            
-            self.products_card = ctk.CTkFrame(self.stats_frame)
-            self.products_card.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-            self.products_label = ctk.CTkLabel(
-                self.products_card,
-                text="Total Products",
-                font=ctk.CTkFont(size=14)
-            )
-            self.products_label.pack(padx=20, pady=(20, 5))
-            self.products_value = ctk.CTkLabel(
-                self.products_card,
-                text="0",
-                font=ctk.CTkFont(size=24, weight="bold"),
-                text_color="green"
-            )
-            self.products_value.pack(padx=20, pady=(0, 20))
-            
-            self.sales_card = ctk.CTkFrame(self.stats_frame)
-            self.sales_card.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
-            self.sales_label = ctk.CTkLabel(
-                self.sales_card,
-                text="Total Sales",
-                font=ctk.CTkFont(size=14)
-            )
-            self.sales_label.pack(padx=20, pady=(20, 5))
-            self.sales_value = ctk.CTkLabel(
-                self.sales_card,
-                text=f"0 {CURRENCY_SYMBOL}",
-                font=ctk.CTkFont(size=24, weight="bold"),
-                text_color="firebrick3"
-            )
-            self.sales_value.pack(padx=20, pady=(0, 20))
-            
-            self.stock_card = ctk.CTkFrame(self.stats_frame)
-            self.stock_card.grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
-            self.stock_label = ctk.CTkLabel(
-                self.stock_card,
-                text="Low Stock Items",
-                font=ctk.CTkFont(size=14)
-            )
-            self.stock_label.pack(padx=20, pady=(20, 5))
-            self.stock_value = ctk.CTkLabel(
-                self.stock_card,
-                text="0",
-                font=ctk.CTkFont(size=24, weight="bold"),
-                text_color="#F39C12"
-            )
-            self.stock_value.pack(padx=20, pady=(0, 20))
-            
-            self.expiry_card = ctk.CTkFrame(self.stats_frame)
-            self.expiry_card.grid(row=1, column=3, padx=10, pady=10, sticky="nsew")
-            self.expiry_label = ctk.CTkLabel(
-                self.expiry_card,
-                text="Expiring Soon",
-                font=ctk.CTkFont(size=14)
-            )
-            self.expiry_label.pack(padx=20, pady=(20, 5))
-            self.expiry_value = ctk.CTkLabel(
-                self.expiry_card,
-                text="0",
-                font=ctk.CTkFont(size=24, weight="bold"),
-                text_color="#E74C3C"
-            )
-            self.expiry_value.pack(padx=20, pady=(0, 20))
-            
-            self.purchases_card = ctk.CTkFrame(self.stats_frame)
-            self.purchases_card.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
-            self.purchases_label = ctk.CTkLabel(
-                self.purchases_card,
-                text="Recent Purchases",
-                font=ctk.CTkFont(size=14)
-            )
-            self.purchases_label.pack(padx=20, pady=(20, 5))
-            self.purchases_value = ctk.CTkLabel(
-                self.purchases_card,
-                text=f"0 {CURRENCY_SYMBOL}",
-                font=ctk.CTkFont(size=24, weight="bold"),
-                text_color="magenta3"
-            )
-            self.purchases_value.pack(padx=20, pady=(0, 20))
-        else:
-            self.stats_title = ctk.CTkLabel(
-                self.stats_frame,
-                text="Statistics Overview",
-                font=ctk.CTkFont(size=18, weight="bold")
-            )
-            self.stats_title.grid(row=0, column=0, columnspan=4, pady=(0, 10))
-            
-            self.products_card = ctk.CTkFrame(self.stats_frame)
-            self.products_card.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-            self.products_label = ctk.CTkLabel(
-                self.products_card,
-                text="Total Products",
-                font=ctk.CTkFont(size=14)
-            )
-            self.products_label.pack(padx=20, pady=(20, 5))
-            self.products_value = ctk.CTkLabel(
-                self.products_card,
-                text="0",
-                font=ctk.CTkFont(size=24, weight="bold"),
-                text_color="green"
-            )
-            self.products_value.pack(padx=20, pady=(0, 20))
-            
-            self.sales_card = ctk.CTkFrame(self.stats_frame)
-            self.sales_card.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
-            self.sales_label = ctk.CTkLabel(
-                self.sales_card,
-                text="Total Sales",
-                font=ctk.CTkFont(size=14)
-            )
-            self.sales_label.pack(padx=20, pady=(20, 5))
-            self.sales_value = ctk.CTkLabel(
-                self.sales_card,
-                text=f"0 {CURRENCY_SYMBOL}",
-                font=ctk.CTkFont(size=24, weight="bold"),
-                text_color="#7CFC00"
-            )
-            self.sales_value.pack(padx=20, pady=(0, 20))
-            
-            self.stock_card = ctk.CTkFrame(self.stats_frame)
-            self.stock_card.grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
-            self.stock_label = ctk.CTkLabel(
-                self.stock_card,
-                text="Low Stock Items",
-                font=ctk.CTkFont(size=14)
-            )
-            self.stock_label.pack(padx=20, pady=(20, 5))
-            self.stock_value = ctk.CTkLabel(
-                self.stock_card,
-                text="0",
-                font=ctk.CTkFont(size=24, weight="bold"),
-                text_color="#F39C12"
-            )
-            self.stock_value.pack(padx=20, pady=(0, 20))
-            
-            self.expiry_card = ctk.CTkFrame(self.stats_frame)
-            self.expiry_card.grid(row=1, column=3, padx=10, pady=10, sticky="nsew")
-            self.expiry_label = ctk.CTkLabel(
-                self.expiry_card,
-                text="Expiring Soon",
-                font=ctk.CTkFont(size=14)
-            )
-            self.expiry_label.pack(padx=20, pady=(20, 5))
-            self.expiry_value = ctk.CTkLabel(
-                self.expiry_card,
-                text="0",
-                font=ctk.CTkFont(size=24, weight="bold"),
-                text_color="#E74C3C"
-            )
-            self.expiry_value.pack(padx=20, pady=(0, 20))
-
-    def create_activities_table(self):
-        self.activities_header = ctk.CTkLabel(
-            self.activities_frame,
-            text="Recent Activities",
-            font=ctk.CTkFont(size=18, weight="bold")
-        )
-        self.activities_header.pack(pady=(10, 5), padx=20, anchor="w")
-        
-        self.activities_scroll = ctk.CTkScrollableFrame(self.activities_frame)
-        self.activities_scroll.pack(fill="both", expand=True, padx=20, pady=10)
-        
-        header_frame = ctk.CTkFrame(self.activities_scroll)
-        header_frame.pack(fill="x", padx=5, pady=2)
-        
-        date_header = ctk.CTkLabel(
-            header_frame,
-            text="Date",
-            font=ctk.CTkFont(size=12, weight="bold")
-        )
-        date_header.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-        
-        type_header = ctk.CTkLabel(
-            header_frame,
-            text="Type",
-            font=ctk.CTkFont(size=12, weight="bold")
-        )
-        type_header.grid(row=0, column=1, padx=10, pady=5, sticky="w")
-        
-        details_header = ctk.CTkLabel(
-            header_frame,
-            text="Details",
-            font=ctk.CTkFont(size=12, weight="bold")
-        )
-        details_header.grid(row=0, column=2, padx=10, pady=5, sticky="w")
-
-    def load_dashboard_stats(self):
-        try:
-            products_count = self.db.execute_query("SELECT COUNT(*) as count FROM products")[0]['count']
-            self.products_value.configure(text=str(products_count))
-            
-            total_sales = self.db.execute_query(
-                "SELECT COALESCE(SUM(total_amount), 0) as total FROM sales"
-            )[0]['total']
-            self.sales_value.configure(
-                text=format_currency(total_sales),
-                text_color="#87CEEB" if self.user_data['role'] == 'admin' else "#00FF00"
-            )
-            
-            low_stock = self.db.execute_query(
-                "SELECT COUNT(*) as count FROM stock WHERE quantity > 0 AND quantity <= min_quantity"
-            )[0]['count']
-            self.stock_value.configure(text=str(low_stock))
-            
-            seven_days_from_now = datetime.now().date() + timedelta(days=7)
-            expiring_count = self.db.execute_query(
-                """
-                SELECT COUNT(*) as count 
-                FROM products p
-                LEFT JOIN stock s ON p.id = s.product_id
-                WHERE p.expiry_date IS NOT NULL 
-                AND p.expiry_date <= %s
-                AND p.expiry_date >= CURDATE()
-                AND s.quantity > 0
-                """,
-                (seven_days_from_now,)
-            )[0]['count']
-            self.expiry_value.configure(text=str(expiring_count))
-            
-            if self.user_data['role'] == 'admin':
-                recent_purchases = self.db.execute_query(
-                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM purchases "
-                    "WHERE DATE(date) = CURDATE()"
-                )[0]['total']
-                self.purchases_value.configure(text=format_currency(recent_purchases))
-            
-            self.load_recent_activities()
-        except Exception as e:
-            print(f"Error loading dashboard stats: {e}")
-
-    def load_recent_activities(self):
-        for widget in self.activities_scroll.winfo_children():
-            if isinstance(widget, ctk.CTkFrame) and widget != self.activities_scroll.winfo_children()[0]:
-                widget.destroy()
-        
-        activities = self.db.execute_query(
-            """
-            SELECT 
-                'Sale' as activity_type,
-                created_at,
-                CONCAT('Sale #', id) as details
-            FROM sales
-            UNION ALL
-            SELECT 
-                'Purchase' as activity_type,
-                created_at,
-                CONCAT('Purchase #', id) as details
-            FROM purchases
-            ORDER BY created_at DESC
-            LIMIT 10
-            """
-        )
-        
-        for activity in activities:
-            activity_frame = ctk.CTkFrame(self.activities_scroll)
-            activity_frame.pack(fill="x", padx=5, pady=2)
-            
-            date_label = ctk.CTkLabel(
-                activity_frame,
-                text=format_datetime(activity['created_at']),
-                font=ctk.CTkFont(size=11)
-            )
-            date_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-            
-            type_label = ctk.CTkLabel(
-                activity_frame,
-                text=activity['activity_type'],
-                font=ctk.CTkFont(size=11)
-            )
-            type_label.grid(row=0, column=1, padx=10, pady=5, sticky="w")
-            
-            details_label = ctk.CTkLabel(
-                activity_frame,
-                text=activity['details'],
-                font=ctk.CTkFont(size=11)
-            )
-            details_label.grid(row=0, column=2, padx=10, pady=5, sticky="w")
-
-    def clear_main_content(self):
-        for widget in self.main_content.winfo_children():
-            widget.destroy()
-
-    def show_dashboard(self):
-        self.clear_main_content()
-        self.create_main_content()
-        self.load_dashboard_stats()
-        self.load_recent_activities()
-        self.update_time()
-
     def show_products(self):
+        print("Debug: Opening Products module...")
+        self.set_active_nav("📦 Products")
+        self.clear_main_content()
         try:
             from products import ProductsWindow
-            ProductsWindow(self.main_content, self.user_data)
-        except ImportError:
+            self.current_window = ProductsWindow(self.main_content, self.user_data)
+            print("Debug: Products module loaded successfully.")
+        except ImportError as e:
+            print(f"Debug: ImportError loading products: {e}")
             self.show_error("Products module not found")
         except Exception as e:
+            print(f"Debug: Exception loading products: {e}")
+            import traceback
+            traceback.print_exc()
             self.show_error(f"Error loading products: {str(e)}")
 
     def show_categories(self):
+        print("Debug: Opening Categories module...")
+        self.set_active_nav("📁 Categories")
+        self.clear_main_content()
         try:
             from categories import CategoriesWindow
-            CategoriesWindow(self.main_content, self.user_data)
-        except ImportError:
+            self.current_window = CategoriesWindow(self.main_content, self.user_data)
+            print("Debug: Categories module loaded.")
+        except ImportError as e:
+            print(f"Debug: ImportError loading categories: {e}")
             self.show_error("Categories module not found")
         except Exception as e:
+            print(f"Debug: Exception loading categories: {e}")
             self.show_error(f"Error loading categories: {str(e)}")
 
     def show_suppliers(self):
+        print("Debug: Opening Suppliers module...")
+        self.set_active_nav("🏢 Suppliers")
+        self.clear_main_content()
         try:
             from suppliers import SuppliersWindow
-            SuppliersWindow(self.main_content, self.user_data)
-        except ImportError:
+            self.current_window = SuppliersWindow(self.main_content, self.user_data)
+            print("Debug: Suppliers module loaded.")
+        except ImportError as e:
+            print(f"Debug: ImportError loading suppliers: {e}")
             self.show_error("Suppliers module not found")
         except Exception as e:
+            print(f"Debug: Exception loading suppliers: {e}")
             self.show_error(f"Error loading suppliers: {str(e)}")
 
     def show_sales(self):
+        print("Debug: Opening Sales module...")
+        self.set_active_nav("💰 Sales")
+        self.clear_main_content()
         try:
             from sales import SalesWindow
-            self.clear_main_content()
-            sales_window = SalesWindow(self.main_content, self.user_data, self)
-        except ImportError:
+            self.current_window = SalesWindow(self.main_content, self.user_data, self)
+            print("Debug: Sales module loaded.")
+        except ImportError as e:
+            print(f"Debug: ImportError loading sales: {e}")
             self.show_error("Sales module not found")
         except Exception as e:
+            print(f"Debug: Exception loading sales: {e}")
             self.show_error(f"Error loading sales: {str(e)}")
 
     def show_purchases(self):
+        print("Debug: Opening Purchases module...")
+        self.set_active_nav("📋 Purchases")
+        self.clear_main_content()
         try:
             from purchase import PurchaseWindow
-            PurchaseWindow(self.main_content, self.user_data)
-        except ImportError:
+            self.current_window = PurchaseWindow(self.main_content, self.user_data)
+            print("Debug: Purchases module loaded.")
+        except ImportError as e:
+            print(f"Debug: ImportError loading purchases: {e}")
             self.show_error("Purchases module not found")
         except Exception as e:
+            print(f"Debug: Exception loading purchases: {e}")
             self.show_error(f"Error loading purchases: {str(e)}")
 
     def show_users(self):
@@ -1149,6 +1159,7 @@ class Dashboard:
             self.show_error("Access Denied: You do not have permission to manage users.")
             return
 
+        self.set_active_nav("👥 Users")
         try:
             self.clear_main_content()
             from users import UsersWindow
@@ -1159,6 +1170,8 @@ class Dashboard:
             self.show_error(f"An error occurred while loading the user management module: {str(e)}")
 
     def show_settings(self):
+        self.set_active_nav("⚙️ Settings")
+        self.clear_main_content()
         try:
             from settings import SettingsWindow
             SettingsWindow(self.main_content, self.user_data)
@@ -1172,6 +1185,8 @@ class Dashboard:
             self.show_error("Access Denied: You do not have permission to view reports.")
             return
 
+        self.set_active_nav("📊 Reports")
+        self.clear_main_content()
         try:
             from reports import ReportsWindow
             ReportsWindow(self.main_content, self.user_data)
@@ -1181,12 +1196,18 @@ class Dashboard:
             self.show_error(f"Error loading reports: {str(e)}")
 
     def show_credit(self):
+        print("Debug: Opening Credit module...")
+        self.set_active_nav("💳 Credit")
+        self.clear_main_content()
         try:
             from credit import CreditWindow
-            CreditWindow(self.main_content, self.user_data)
-        except ImportError:
+            self.current_window = CreditWindow(self.main_content, self.user_data)
+            print("Debug: Credit module loaded.")
+        except ImportError as e:
+            print(f"Debug: ImportError loading credit: {e}")
             self.show_error("Credit module not found")
         except Exception as e:
+            print(f"Debug: Exception loading credit: {e}")
             self.show_error(f"Error loading credit management: {str(e)}")
 
     def show_recent_activities(self):
@@ -1330,8 +1351,10 @@ class Dashboard:
     def quick_create_po(self):
         try:
             from purchase import PurchaseWindow
-            purchase_window = PurchaseWindow(self.main_content, self.user_data)
-            purchase_window.add_purchase()
+            # 1. Switch the view to the Purchase management window
+            self.show_purchases()
+            # 2. Add a small delay to ensure the window has been initialized, then call add_purchase()
+            self.root.after(100, self.current_window.add_purchase)
         except ImportError:
             self.show_error("Purchase module not found")
         except Exception as e:

@@ -12,6 +12,11 @@ class CreditWindow(ctk.CTkFrame):
         self.user_data = user_data
         self.db = Database()
         
+        # Configure grid weights for parent frame
+        self.grid(row=0, column=0, sticky="nsew")
+        parent_frame.grid_rowconfigure(0, weight=1)
+        parent_frame.grid_columnconfigure(0, weight=1)
+        
         # Check and update database schema if needed
         self.check_credits_table()
         
@@ -72,6 +77,10 @@ class CreditWindow(ctk.CTkFrame):
         scrollbar = ttk.Scrollbar(self.tree_frame, orient="vertical", command=self.tree.yview)
         scrollbar.pack(side="right", fill="y")
         self.tree.configure(yscrollcommand=scrollbar.set)
+        
+        # Bind events
+        self.tree.bind("<Double-1>", lambda e: self.view_credit_details())
+        self.tree.bind("<Button-3>", self.show_context_menu)
 
         # Buttons frame
         self.button_frame = ctk.CTkFrame(self)
@@ -112,6 +121,74 @@ class CreditWindow(ctk.CTkFrame):
             command=self.load_credits
         )
         self.refresh_button.pack(side="left", padx=5)
+
+    def show_context_menu(self, event):
+        """Display right-click context menu"""
+        # Select item on right click
+        item = self.tree.identify_row(event.y)
+        if item:
+            self.tree.selection_set(item)
+            
+            # Create menu
+            menu = tk.Menu(self, tearoff=0)
+            menu.add_command(label="View Credit Details", command=self.view_credit_details)
+            menu.add_command(label="Update Credit", command=self.update_credit)
+            menu.add_command(label="Mark as Paid", command=self.mark_as_paid)
+            menu.add_separator()
+            menu.add_command(label="View Sale Details", command=self.view_sale_details)
+            menu.add_separator()
+            menu.add_command(label="Delete Credit", command=self.delete_credit)
+            menu.add_command(label="Refresh List", command=self.load_credits)
+            
+            # Show menu
+            menu.post(event.x_root, event.y_root)
+
+    def view_credit_details(self):
+        """View credit details in a read-only window"""
+        selected = self.tree.selection()
+        if not selected:
+            return
+            
+        credit_data = self.tree.item(selected[0])["values"]
+        credit_id = credit_data[0]
+        
+        try:
+            # Create a new window to display credit details
+            details_window = ctk.CTkToplevel(self)
+            details_window.title("Credit Record Details")
+            details_window.geometry("500x500")
+            details_window.transient(self)
+            details_window.grab_set()
+
+            main_frame = ctk.CTkFrame(details_window)
+            main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+            ctk.CTkLabel(main_frame, text="💰 Credit Information", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(0, 20))
+            
+            def add_detail(label, value):
+                f = ctk.CTkFrame(main_frame, fg_color="transparent")
+                f.pack(fill="x", pady=5)
+                ctk.CTkLabel(f, text=label, width=150, anchor="w", font=ctk.CTkFont(weight="bold")).pack(side="left")
+                ctk.CTkLabel(f, text=str(value), anchor="w").pack(side="left", fill="x", expand=True)
+
+            add_detail("Credit ID:", credit_id)
+            add_detail("Sale ID:", credit_data[1])
+            add_detail("Customer:", credit_data[2])
+            add_detail("Product:", credit_data[3])
+            add_detail("Sale Amount:", credit_data[4])
+            add_detail("Credit Balance:", credit_data[5])
+            add_detail("Created On:", credit_data[6])
+            add_detail("Current Status:", credit_data[7])
+            
+            # Action Buttons
+            btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+            btn_frame.pack(fill="x", pady=(30, 0))
+            
+            ctk.CTkButton(btn_frame, text="Edit This Credit", command=lambda: [details_window.destroy(), self.update_credit()], fg_color="orange").pack(side="left", padx=10, fill="x", expand=True)
+            ctk.CTkButton(btn_frame, text="Close", command=details_window.destroy).pack(side="left", padx=10, fill="x", expand=True)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load details: {e}")
 
     def view_sale_details(self):
         """Show details of the selected sale"""
@@ -748,27 +825,40 @@ class CreditWindow(ctk.CTkFrame):
         total_amount = sum(amount for _, _, _, _, amount in items)
         
         try:
-            # Create sale record
-            sale_id = self.db.execute_query(
-                "INSERT INTO sales (customer_name, total_amount, status, created_at) VALUES (%s, %s, 'Completed', NOW())",
-                (customer_name, total_amount),
-                fetch_id=True
-            )
+            # Create invoice number
+            import time
+            invoice_no = f"CR-{datetime.now().strftime('%Y%m%d')}-{int(time.time()) % 1000:03d}"
+
+            # Since the sales table requires product_id, quantity, and unit_price for each row,
+            # and complete_credit_sale allows multiple items, we'll insert each item as a separate sale record
+            # sharing the same customer name and marked as 'Credit'.
+            # Alternatively, we could update the schema, but inserting per item is safer for now.
             
-            # Create credit record
+            total_sale_id = None
+            for product_id, product_name, quantity, price, amount in items:
+                current_sale_id = self.db.execute_query(
+                    """INSERT INTO sales (invoice_number, product_id, quantity, unit_price, total_amount, 
+                       payment_method, payment_status, customer_name, status, created_at) 
+                       VALUES (%s, %s, %s, %s, %s, 'Credit', 'Unpaid', %s, 'completed', NOW())""",
+                    (invoice_no, product_id, quantity, price, amount, customer_name)
+                )
+                if total_sale_id is None:
+                    total_sale_id = current_sale_id
+
+            # Create ONE credit record for the entire transaction (using the first sale_id as reference)
             self.db.execute_query(
                 "INSERT INTO credits (sale_id, customer_name, amount, status, due_date) VALUES (%s, %s, %s, 'Unpaid', %s)",
-                (sale_id, customer_name, total_amount, due_date)
+                (total_sale_id, customer_name, total_amount, due_date)
             )
             
-            # Update product stock quantities
+            # Update product stock quantities in the stock table
             for product_id, _, quantity, _, _ in items:
                 self.db.execute_query(
-                    "UPDATE products SET stock_quantity = stock_quantity - %s WHERE id = %s",
+                    "UPDATE stock SET quantity = quantity - %s WHERE product_id = %s",
                     (quantity, product_id)
                 )
             
-            messagebox.showinfo("Success", "Credit sale completed successfully")
+            messagebox.showinfo("Success", f"Credit sale completed successfully\nInvoice: {invoice_no}")
             self.credit_sale_window.destroy()
             self.load_credits()
             
@@ -851,12 +941,34 @@ class CreditWindow(ctk.CTkFrame):
             return
 
         try:
-            credit_id = self.tree.item(selected[0])['values'][0]
+            # Get credit_id and sale_id (Sale ID is at index 1 in treeview)
+            values = self.tree.item(selected[0])['values']
+            credit_id = values[0]
+            sale_id = values[1]
             
+            # 1. Update credit status
             self.db.execute_query("UPDATE credits SET status = 'Paid' WHERE id = %s", (credit_id,))
             
-            messagebox.showinfo("Success", "Credit marked as paid")
+            # 2. Update corresponding sales status
+            self.db.execute_query("UPDATE sales SET payment_status = 'Paid' WHERE id = %s", (sale_id,))
+            
+            messagebox.showinfo("Success", "Payment completed! Credit and Sale records updated.")
             self.load_credits()
             
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to update credit status: {str(e)}")
+            messagebox.showerror("Error", f"Failed to complete payment: {str(e)}")
+         values = self.tree.item(selected[0])['values']
+            credit_id = values[0]
+            sale_id = values[1]
+            
+            # 1. Update credit status
+            self.db.execute_query("UPDATE credits SET status = 'Paid' WHERE id = %s", (credit_id,))
+            
+            # 2. Update corresponding sales status
+            self.db.execute_query("UPDATE sales SET payment_status = 'Paid' WHERE id = %s", (sale_id,))
+            
+            messagebox.showinfo("Success", "Payment completed! Credit and Sale records updated.")
+            self.load_credits()
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to complete payment: {str(e)}")

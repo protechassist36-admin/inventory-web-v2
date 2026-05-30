@@ -1,0 +1,24 @@
+{
+  "name": "Protech Assist SL Limited",
+  "short_name": "ProtechAssist",
+  "description": "Premium Enterprise OS for Retail Intelligence and Inventory Management.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/images/logo2.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo2.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}

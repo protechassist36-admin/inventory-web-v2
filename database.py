@@ -140,7 +140,12 @@ class Database:
             
             # Update sales table
             if self.table_exists('sales'):
+                self.add_column_if_not_exists('sales', 'invoice_number', "VARCHAR(50) UNIQUE")
+                self.add_column_if_not_exists('sales', 'unit_price', "DECIMAL(10,2) NOT NULL DEFAULT 0.00")
                 self.add_column_if_not_exists('sales', 'status', "ENUM('completed','pending','cancelled') DEFAULT 'completed'")
+                self.add_column_if_not_exists('sales', 'payment_status', "ENUM('Paid', 'Unpaid', 'Partially Paid') DEFAULT 'Paid'")
+                # Update payment_method enum
+                self.execute_query("ALTER TABLE sales MODIFY COLUMN payment_method ENUM('Cash', 'Credit', 'Mobile Money', 'Bank Transfer', 'Cheque') DEFAULT 'Cash'")
             
             # Update purchases table
             if self.table_exists('purchases'):

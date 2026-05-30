@@ -56,6 +56,10 @@ class SuppliersWindow(ctk.CTkFrame):
         self.tree = ttk.Treeview(self.tree_frame, columns=("ID", "Name", "Contact", "Email", "Address"), show="headings")
         self.tree.pack(fill="both", expand=True)
         
+        # Bind events
+        self.tree.bind("<Double-1>", lambda e: self.update_supplier())
+        self.tree.bind("<Button-3>", self.show_context_menu)
+        
         # Define headings
         self.tree.heading("ID", text="ID")
         self.tree.heading("Name", text="Name")
@@ -92,6 +96,80 @@ class SuppliersWindow(ctk.CTkFrame):
             messagebox.showerror("Database Error", f"Error connecting to database: {e}")
             return None
     
+    def show_context_menu(self, event):
+        """Display right-click context menu"""
+        # Select item on right click
+        item = self.tree.identify_row(event.y)
+        if item:
+            self.tree.selection_set(item)
+            
+            # Create menu
+            menu = tk.Menu(self, tearoff=0)
+            menu.add_command(label="View Details", command=self.view_supplier_details)
+            menu.add_command(label="Edit Supplier", command=self.update_supplier)
+            menu.add_command(label="Delete Supplier", command=self.delete_supplier)
+            menu.add_separator()
+            menu.add_command(label="Refresh List", command=self.refresh_suppliers)
+            
+            # Show menu
+            menu.post(event.x_root, event.y_root)
+
+    def view_supplier_details(self):
+        """View supplier details in a read-only window"""
+        selected = self.tree.selection()
+        if not selected:
+            return
+            
+        sup_id = self.tree.item(selected[0])["values"][0]
+        
+        connection = self.get_db_connection()
+        if not connection:
+            return
+            
+        try:
+            with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+                cursor.execute("SELECT * FROM suppliers WHERE id = %s", (sup_id,))
+                s = cursor.fetchone()
+                
+            if not s:
+                messagebox.showerror("Error", "Supplier not found")
+                return
+                
+            dialog = ctk.CTkToplevel(self)
+            dialog.title("Supplier Details")
+            dialog.geometry("450x450")
+            dialog.transient(self)
+            dialog.grab_set()
+            
+            main_frame = ctk.CTkFrame(dialog)
+            main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+            
+            ctk.CTkLabel(main_frame, text="🏢 Supplier Information", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(0, 20))
+            
+            def add_detail(label, value):
+                f = ctk.CTkFrame(main_frame, fg_color="transparent")
+                f.pack(fill="x", pady=5)
+                ctk.CTkLabel(f, text=label, width=150, anchor="w", font=ctk.CTkFont(weight="bold")).pack(side="left")
+                ctk.CTkLabel(f, text=str(value), anchor="w").pack(side="left", fill="x", expand=True)
+
+            add_detail("Supplier ID:", f"SUP-{s['id']:04d}")
+            add_detail("Name:", s['name'])
+            add_detail("Contact Person:", s.get('contact_person', 'N/A'))
+            add_detail("Email:", s['email'])
+            add_detail("Address:", s['address'])
+            
+            # Action Buttons
+            btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+            btn_frame.pack(fill="x", pady=(30, 0))
+            
+            ctk.CTkButton(btn_frame, text="Edit This Supplier", command=lambda: [dialog.destroy(), self.update_supplier()], fg_color="orange").pack(side="left", padx=10, fill="x", expand=True)
+            ctk.CTkButton(btn_frame, text="Close", command=dialog.destroy).pack(side="left", padx=10, fill="x", expand=True)
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        finally:
+            connection.close()
+
     def refresh_suppliers(self):
         """Load all suppliers from database into treeview"""
         # Clear existing items

@@ -11,9 +11,9 @@ VERSION = '1.0.0'
 
 # GUI Configuration
 GUI_CONFIG = {
-    'theme': 'System',
+    'theme': 'Light',
     'color_theme': 'blue',
-    'color_secondary': ('#2b2b2b', '#2b2b2b')
+    'color_secondary': ('#f8fafc', '#f8fafc')
 }
 
 # Button Configuration
