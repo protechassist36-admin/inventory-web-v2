@@ -1,2 +1,16 @@
 .venv/photo/ads.mp4
 web/public/videos/ads.mp4
+
+node_modules/
+.venv/
+.env
+.env.local
+.next/
+dist/
+build/
+*.mp4
+*.mov
+*.zip
+*.rar
+web/public/videos/
+photo/
