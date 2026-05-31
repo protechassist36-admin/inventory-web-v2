@@ -131,6 +131,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: Package,
           items: [
             { title: "Products", url: "/dashboard/inventory/products" },
+            { title: "Network Exchange", url: "/dashboard/inventory/network" },
             { title: "Categories", url: "/dashboard/inventory/categories" },
             { title: "Batches", url: "/dashboard/inventory/batches" },
             { title: "Stock History", url: "/dashboard/inventory/history" },
@@ -158,12 +159,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           items: [
             { title: "Launch POS", url: "/dashboard/pos" },
             { title: "Sales History", url: "/dashboard/sales/history" },
+            { title: "Sales Orders", url: "/dashboard/sales/orders" },
             { title: "Credit Sales", url: "/dashboard/sales/credit" },
             { title: "Returns", url: "/dashboard/sales/returns" },
           ],
         },
-      ]
-    },
     {
       label: "Relationships",
       items: [
@@ -265,7 +265,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   const isActive = pathname.startsWith(item.url) && (item.url !== "/dashboard" || pathname === "/dashboard");
                   const Icon = item.icon;
                   return (
-                    <SidebarMenuItem key={item.title} className="relative">
+                    <SidebarMenuItem key={item.title} className="relative" id={item.title === "Inventory" ? "sidebar-inventory" : item.title === "Sales" ? "sidebar-pos" : undefined}>
                       {isActive && (
                         <motion.div 
                           layoutId="active-pill"
@@ -331,7 +331,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-slate-100 dark:border-slate-800">
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem id="user-profile">
             <DropdownMenu>
               <DropdownMenuTrigger 
                 render={
