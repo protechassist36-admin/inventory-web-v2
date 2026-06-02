@@ -138,7 +138,7 @@ export async function changePassword(data: { current: string; new: string }) {
     const session = await auth();
     if (!session?.user?.id) throw new Error("Unauthorized");
 
-    const user = await prisma.user.findUnique({
+    const user = await globalPrisma.user.findUnique({
       where: { id: session.user.id }
     });
 
@@ -149,7 +149,7 @@ export async function changePassword(data: { current: string; new: string }) {
 
     const newHash = await bcrypt.hash(data.new, 10);
 
-    await prisma.user.update({
+    await globalPrisma.user.update({
       where: { id: user.id },
       data: { passwordHash: newHash }
     });
@@ -167,6 +167,8 @@ export async function updateUser(id: string, data: any) {
     if (!session?.user?.businessId || session.user.role !== "ADMIN") {
       throw new Error("Unauthorized");
     }
+
+    const prisma = getTenantPrisma(session.user.businessId);
 
     const user = await prisma.user.update({
       where: { id, businessId: session.user.businessId },
@@ -197,6 +199,8 @@ export async function deleteUser(id: string) {
 
     // Prevent self-deletion
     if (session.user.id === id) throw new Error("You cannot delete your own admin account");
+
+    const prisma = getTenantPrisma(session.user.businessId);
 
     await prisma.user.delete({
       where: { id, businessId: session.user.businessId },
