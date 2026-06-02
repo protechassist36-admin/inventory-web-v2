@@ -65,21 +65,22 @@ export default function LoginPage() {
           toast.error(result?.error || "Invalid credentials, please check your email and password.");
         }
       } else {
-        const session = await getSession();
-        console.log("DEBUG: Login successful, session object:", session);
+        // Fetch session with a slight delay if necessary to ensure it's populated
+        let session = await getSession();
+        if (!session) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          session = await getSession();
+        }
         
-        // Refresh the router state to ensure session is updated
-        router.refresh();
+        console.log("DEBUG: Login successful, session object:", session);
         
         // Redirect based on role
         if (session?.user?.role === "SUPERADMIN") {
-          console.log("DEBUG: Redirecting to /super-admin based on role");
           toast.success("Welcome, Super Admin");
-          router.push("/super-admin");
+          window.location.href = "/super-admin";
         } else {
-          console.log("DEBUG: Redirecting to /dashboard");
           toast.success("Login successful");
-          router.push("/dashboard");
+          window.location.href = "/dashboard";
         }
       }
     } catch (error) {
