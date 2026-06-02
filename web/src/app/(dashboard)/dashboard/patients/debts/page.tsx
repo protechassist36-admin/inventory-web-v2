@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn, getIndustryColor } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 
+export const dynamic = "force-dynamic";
+
 export default function PlaceholderPage() {
   const { data: session } = useSession();
   const businessType = session?.user?.businessType || "SHOP";

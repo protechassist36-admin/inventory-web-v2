@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LoadingProvider } from "@/components/providers/loading-provider";
+import { Suspense } from "react";
 import { GlobalThemeToggle } from "@/components/shared/global-theme-toggle";
 import { InstallPWA } from "@/components/shared/install-pwa";
 import { Toaster } from "@/components/ui/sonner";
@@ -55,9 +56,11 @@ export default function RootLayout({
             disableTransitionOnChange
         >
           <AuthProvider>
-            <LoadingProvider>
-              {children}
-            </LoadingProvider>
+            <Suspense>
+              <LoadingProvider>
+                {children}
+              </LoadingProvider>
+            </Suspense>
             <GlobalThemeToggle />
             <InstallPWA />
             <Toaster />

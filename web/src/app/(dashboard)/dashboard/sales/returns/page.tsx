@@ -32,6 +32,8 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default function SalesReturnsPage() {
   const { data: session } = useSession();
   const router = useRouter();

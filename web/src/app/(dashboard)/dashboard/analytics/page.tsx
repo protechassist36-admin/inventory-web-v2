@@ -35,6 +35,8 @@ import { useSession } from "next-auth/react";
 import { cn, getIndustryColor } from "@/lib/utils";
 import { toast } from "sonner";
 
+export const dynamic = "force-dynamic";
+
 export default function AnalyticsPage() {
   const { data: session } = useSession();
   const [sales, setSales] = useState<any[]>([]);
