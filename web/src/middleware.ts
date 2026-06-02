@@ -1,64 +1,65 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { auth } from "@/lib/auth";
 
-export async function middleware(request: NextRequest) {
+export default auth((req) => {
+  // Cast req to 'any' to ensure auth property is accessible during TypeScript build
+  const session = (req as any).auth;
+  const path = req.nextUrl.pathname;
+  const role = session?.user?.role;
+  const businessId = session?.user?.businessId;
+  
+  console.log(`DEBUG: Middleware - Path: ${path}, Session exists: ${!!session}, Role: ${role}`);
+
   // 0. Explicitly allow Auth API routes
-  if (request.nextUrl.pathname.startsWith('/api/auth')) {
+  if (path.startsWith('/api/auth')) {
     return NextResponse.next();
   }
 
-  const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
-  const path = request.nextUrl.pathname;
-  
-  console.log(`DEBUG: Middleware - Path: ${path}, Token exists: ${!!token}, Role: ${token?.role}, Secret Loaded: ${!!process.env.AUTH_SECRET}`);
-
-  // 1. If no token, redirect to login unless already there
-  if (!token) {
+  // 1. If no session, redirect to login unless already there
+  if (!session) {
     if (path.startsWith('/login') || path.startsWith('/register') || path === '/') {
       return NextResponse.next();
     }
-    console.log("DEBUG: Middleware - Redirecting to /login due to no token");
-    return NextResponse.redirect(new URL('/login', request.url));
+    console.log("DEBUG: Middleware - Redirecting to /login due to no session");
+    return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  // 2. If token is present, don't let them go back to login/register/root
+  // 2. If session is present, don't let them go back to login/register/root
   if (path.startsWith('/login') || path.startsWith('/register') || path === '/') {
-    console.log("DEBUG: Middleware - Token present, redirecting based on role:", token.role);
-    if (token.role === 'SUPERADMIN') {
-      return NextResponse.redirect(new URL('/super-admin', request.url));
+    console.log("DEBUG: Middleware - Session present, redirecting based on role:", role);
+    if (role === 'SUPERADMIN') {
+      return NextResponse.redirect(new URL('/super-admin', req.url));
     }
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   // 3. SuperAdmin Bypass
-  if (token.role === 'SUPERADMIN') {
+  if (role === 'SUPERADMIN') {
     return NextResponse.next();
   }
 
   // 4. Protect SuperAdmin routes for non-SuperAdmins
   if (path.startsWith('/super-admin')) {
     console.log("DEBUG: Blocking non-SuperAdmin from super-admin route");
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   // 5. Enforce Business Context for non-SuperAdmins
-  if (!token.businessId) {
-    return NextResponse.redirect(new URL('/register', request.url));
+  if (!businessId) {
+    return NextResponse.redirect(new URL('/register', req.url));
   }
 
-  // If already logged in and hitting a dashboard route as a standard user, 
-  // allow them if they have a businessId
+  // 6. Allow dashboard routes and inject businessId
   if (path.startsWith('/dashboard') || path === '/') {
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-business-id', token.businessId as string);
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-business-id', businessId as string);
     return NextResponse.next({
       request: { headers: requestHeaders },
     });
   }
   
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ['/dashboard/:path*', '/super-admin/:path*', '/api/:path*', '/login', '/register', '/'],
