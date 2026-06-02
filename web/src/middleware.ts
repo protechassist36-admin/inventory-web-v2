@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
-  // Cast req to 'any' to ensure auth property is accessible during TypeScript build
   const session = (req as any).auth;
   const path = req.nextUrl.pathname;
   const role = session?.user?.role;

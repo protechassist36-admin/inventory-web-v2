@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { z } from "zod";
-import { cookies } from "next/headers";
+import { authConfig } from "../auth.config";
 
 declare module "next-auth" {
   interface Session {
@@ -27,69 +27,7 @@ declare module "next-auth" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET,
-  pages: {
-    signIn: "/login",
-  },
-  callbacks: {
-    async session({ session, token }) {
-      if (token.sub && session.user) {
-        session.user.id = token.sub as string;
-      }
-      if (token.businessId && session.user) {
-        session.user.businessId = token.businessId as string;
-      }
-      if (token.businessType && session.user) {
-        session.user.businessType = token.businessType as string;
-      }
-      if (token.trialEndDate && session.user) {
-        session.user.trialEndDate = new Date(token.trialEndDate as string);
-      }
-      if (token.role && session.user) {
-        session.user.role = token.role as string;
-      }
-      if (token.impersonatedBy && session.user) {
-        (session as any).impersonated = true;
-      }
-      return session;
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        console.log("DEBUG: JWT callback - processing new user:", user.email, "role:", user.role);
-        token.businessId = user.businessId;
-        token.businessName = user.businessName;
-        token.businessType = user.businessType;
-        token.trialEndDate = user.trialEndDate?.toISOString();
-        token.role = user.role;
-      } else {
-        console.log("DEBUG: JWT callback - existing session, current token role:", token.role);
-      }
-
-      const cookieStore = await cookies();
-      const impersonationTargetId = cookieStore.get("impersonation_target")?.value;
-
-      if (impersonationTargetId && token.role === "SUPERADMIN") {
-        console.log("DEBUG: JWT callback - Impersonating target:", impersonationTargetId);
-        const targetUser = await prisma.user.findUnique({
-          where: { id: impersonationTargetId },
-          include: { 
-            business: true,
-            role: true
-          },
-        });
-
-        if (targetUser) {
-          token.sub = targetUser.id;
-          token.role = targetUser.role.name;
-          token.businessId = targetUser.businessId;
-          token.businessName = targetUser.business.name;
-          token.businessType = targetUser.business.type;
-          token.impersonatedBy = "SUPERADMIN";
-        }
-      }
-      return token;
-    },
-  },
+  ...authConfig,
   providers: [
     CredentialsProvider({
       async authorize(credentials) {
@@ -99,8 +37,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (parsedCredentials.success) {
           const { email, password } = parsedCredentials.data;
-          console.log(`DEBUG: Attempting login for email: ${email}`);
-          console.log(`DEBUG: DATABASE_URL in auth: ${process.env.DATABASE_URL}`);
           
           const user = await prisma.user.findUnique({ 
             where: { email },
@@ -110,22 +46,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             }
           });
           
-          if (!user) {
-            console.log(`DEBUG: User not found: ${email}. Listing all users for diagnostic:`);
-            const allUsers = await prisma.user.findMany({ select: { email: true } });
-            console.log(JSON.stringify(allUsers));
+          if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
             throw new Error("Invalid email or password.");
           }
-
-          console.log(`DEBUG: User found, comparing password for: ${email}`);
-          const passwordsMatch = await bcrypt.compare(password, user.passwordHash);
-          
-          if (!passwordsMatch) {
-            console.log(`DEBUG: Password mismatch for: ${email}`);
-            throw new Error("Invalid email or password.");
-          }
-
-          console.log(`DEBUG: Login successful for: ${email}`);
 
           return {
             id: user.id,
@@ -139,9 +62,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             emailVerified: user.emailVerified,
           };
         }
-        console.log(`DEBUG: Credential parsing failed`);
         return null;
       },
     }),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async session({ session, token }) {
+      if (token.sub && session.user) session.user.id = token.sub as string;
+      if (token.businessId && session.user) session.user.businessId = token.businessId as string;
+      if (token.role && session.user) session.user.role = token.role as string;
+      return session;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.businessId = user.businessId;
+        token.role = user.role;
+      }
+      return token;
+    },
+  },
 });
