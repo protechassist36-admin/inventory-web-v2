@@ -111,7 +111,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
           
           if (!user) {
-            console.log(`DEBUG: User not found: ${email}`);
+            console.log(`DEBUG: User not found: ${email}. Listing all users for diagnostic:`);
+            const allUsers = await prisma.user.findMany({ select: { email: true } });
+            console.log(JSON.stringify(allUsers));
             throw new Error("Invalid email or password.");
           }
 
