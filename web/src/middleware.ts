@@ -10,17 +10,21 @@ export async function middleware(request: NextRequest) {
 
   const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
   const path = request.nextUrl.pathname;
+  
+  console.log(`DEBUG: Middleware - Path: ${path}, Token exists: ${!!token}, Role: ${token?.role}`);
 
   // 1. If no token, redirect to login unless already there
   if (!token) {
     if (path.startsWith('/login') || path.startsWith('/register') || path === '/') {
       return NextResponse.next();
     }
+    console.log("DEBUG: Middleware - Redirecting to /login due to no token");
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // 2. If token is present, don't let them go back to login/register/root
   if (path.startsWith('/login') || path.startsWith('/register') || path === '/') {
+    console.log("DEBUG: Middleware - Token present, redirecting based on role:", token.role);
     if (token.role === 'SUPERADMIN') {
       return NextResponse.redirect(new URL('/super-admin', request.url));
     }
