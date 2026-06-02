@@ -100,6 +100,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (parsedCredentials.success) {
           const { email, password } = parsedCredentials.data;
           console.log(`DEBUG: Attempting login for email: ${email}`);
+          console.log(`DEBUG: DATABASE_URL in auth: ${process.env.DATABASE_URL}`);
           
           const user = await prisma.user.findUnique({ 
             where: { email },
