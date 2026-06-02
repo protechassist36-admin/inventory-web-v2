@@ -61,11 +61,11 @@ function VerifyEmailContent() {
         </p>
 
         {status !== "loading" && (
-          <Button asChild className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 font-black text-xs uppercase tracking-widest">
-            <Link href="/login">
+          <Link href="/login" className="w-full">
+            <Button className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 font-black text-xs uppercase tracking-widest">
               {status === "success" ? "Continue to Login" : "Back to Login"}
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         )}
       </CardContent>
     </Card>

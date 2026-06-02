@@ -377,8 +377,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <Settings className="mr-3 size-4 text-slate-400" />
                     Settings Configuration
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    <ThemeToggle />
+                <DropdownMenuItem render={<ThemeToggle />}>
                 </DropdownMenuItem>
                 {session?.user?.role === "SUPERADMIN" && (
                    <DropdownMenuItem render={<Link href="/super-admin" className="flex items-center w-full" />}>
