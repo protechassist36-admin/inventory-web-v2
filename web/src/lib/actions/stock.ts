@@ -111,6 +111,7 @@ export async function adjustStock(data: {
           type: data.type,
           reason: data.reason || "Manual Adjustment",
           userId: userId,
+          businessId: businessId,
         },
       });
     });
