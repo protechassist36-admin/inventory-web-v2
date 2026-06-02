@@ -68,6 +68,9 @@ export default function LoginPage() {
         const session = await getSession();
         console.log("DEBUG: Login successful, session object:", session);
         
+        // Refresh the router state to ensure session is updated
+        router.refresh();
+        
         // Redirect based on role
         if (session?.user?.role === "SUPERADMIN") {
           console.log("DEBUG: Redirecting to /super-admin based on role");
