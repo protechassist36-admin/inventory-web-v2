@@ -34,23 +34,10 @@ export default function EnhancedSuperAdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("SUPER-ADMIN DEBUG: status =", status);
-    console.log("SUPER-ADMIN DEBUG: role =", session?.user?.role);
-
     if (status === "unauthenticated") {
-      console.log("SUPER-ADMIN DEBUG: Not authenticated, redirecting to login");
       router.push("/login");
-    } else if (status === "authenticated") {
-      const userRole = session?.user?.role?.toString().toUpperCase();
-      if (userRole !== "SUPERADMIN") {
-        console.log("SUPER-ADMIN DEBUG: Wrong role, redirecting to login. Found:", userRole);
-        router.push("/login");
-      } else {
-        console.log("SUPER-ADMIN DEBUG: Access granted, fetching stats");
-        fetchStats();
-      }
     }
-  }, [status, session, router]);
+  }, [status, router]);
 
   async function fetchStats() {
     try {
