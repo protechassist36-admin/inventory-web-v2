@@ -472,7 +472,7 @@ export default function POSPage() {
                         <div className="flex-1 flex flex-col">
                           <h3 className="font-bold text-[11px] text-slate-900 uppercase tracking-tight line-clamp-2 leading-tight mb-1">{p.name}</h3>
                           <div className="mt-auto">
-                            <div className="text-blue-600 font-bold text-sm">Le {p.unitPrice.toLocaleString()}</div>
+                            <div className="text-blue-600 font-bold text-sm">Le {Math.round(p.unitPrice).toLocaleString()}</div>
                             <div className="text-[9px] font-bold text-slate-400 uppercase mt-1">{p.stockQuantity} in stock</div>
                           </div>
                         </div>
@@ -498,7 +498,7 @@ export default function POSPage() {
                         <div className="font-bold text-slate-900 uppercase text-xs truncate">{p.name}</div>
                         <div className="text-[10px] text-slate-400 font-medium">SKU: {p.sku || 'N/A'} • {p.stockQuantity} in stock</div>
                      </div>
-                     <div className="font-bold text-blue-600 text-sm">Le {p.unitPrice.toLocaleString()}</div>
+                     <div className="font-bold text-blue-600 text-sm">Le {Math.round(p.unitPrice).toLocaleString()}</div>
                      <div className="h-8 w-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
                         <Plus className="h-4 w-4" />
                      </div>
@@ -587,7 +587,7 @@ export default function POSPage() {
                              )}
                           </div>
                           <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                             Le {item.price.toLocaleString()} per unit
+                             Le {Math.round(item.price).toLocaleString()} per unit
                           </div>
                         </div>
                         <button 
@@ -600,7 +600,7 @@ export default function POSPage() {
                       
                       <div className="flex items-center justify-between gap-4">
                         <div className="text-lg font-bold text-slate-900 tracking-tight">
-                          Le {(item.price * item.quantity).toLocaleString()}
+                          Le {Math.round(item.price * item.quantity).toLocaleString()}
                         </div>
                         
                         <div className="flex items-center gap-1 p-1 bg-slate-50 rounded-lg border border-slate-100">
@@ -652,7 +652,7 @@ export default function POSPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment</Label>
-                    <Select value={paymentMethod} onValueChange={(v: string | null) => setPaymentMethod(v ?? "CASH")}>
+                    <Select value={paymentMethod} onValueChange={(v: string | null) => setPaymentMethod((v ?? "CASH") as "CASH" | "MOBILE_MONEY" | "CARD")}>
                       <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white text-slate-900 shadow-sm px-3">
                         <SelectValue />
                       </SelectTrigger>
@@ -667,7 +667,7 @@ export default function POSPage() {
                 
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment Status</Label>
-                  <Tabs value={paymentStatus} onValueChange={(val: string | null) => setPaymentStatus(val ?? "PAID")} className="w-full">
+                  <Tabs value={paymentStatus} onValueChange={(val: string | null) => setPaymentStatus((val ?? "PAID") as "PAID" | "UNPAID" | "PARTIAL")} className="w-full">
                     <TabsList className="grid grid-cols-3 h-11 rounded-lg bg-slate-100 border border-slate-200 p-1">
                       <TabsTrigger value="PAID" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all">Fully Paid</TabsTrigger>
                       <TabsTrigger value="PARTIAL" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm transition-all">Partial</TabsTrigger>
@@ -681,17 +681,17 @@ export default function POSPage() {
                   <div className="space-y-2 relative z-10">
                     <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                        <span>Subtotal</span>
-                       <span className="text-slate-900 font-bold">Le {total.toLocaleString()}</span>
+                       <span className="text-slate-900 font-bold">Le {Math.round(total).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                        <span>GST (15%)</span>
-                       <span className="text-slate-900 font-bold">Le {tax.toLocaleString()}</span>
+                       <span className="text-slate-900 font-bold">Le {Math.round(tax).toLocaleString()}</span>
                     </div>
                     <div className="h-[1px] bg-slate-200 w-full my-1" />
                     <div className="flex justify-between items-end">
                        <div className="space-y-1">
                           <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Grand Total</div>
-                          <div className="text-3xl font-bold text-slate-900 tracking-tight">Le {grandTotal.toLocaleString()}</div>
+                          <div className="text-3xl font-bold text-slate-900 tracking-tight">Le {Math.round(grandTotal).toLocaleString()}</div>
                        </div>
                        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
                           <CheckCircle2 className="h-6 w-6 text-white" />
@@ -723,7 +723,7 @@ export default function POSPage() {
                   </div>
                 ) : (
                   <>
-                    <span>Checkout Now (Le {grandTotal.toLocaleString()})</span>
+                    <span>Checkout Now (Le {Math.round(grandTotal).toLocaleString()})</span>
                     <ArrowRight className="h-5 w-5" />
                   </>
                 )}
@@ -773,11 +773,11 @@ export default function POSPage() {
                        <div className="flex-1">
                           <div className="text-xs font-bold text-slate-900 uppercase leading-tight mb-1">{item.name}</div>
                           <div className="text-[10px] text-slate-400 font-medium">
-                             {item.quantity} x Le {item.price.toLocaleString()}
+                             {item.quantity} x Le {Math.round(item.price).toLocaleString()}
                           </div>
                        </div>
                        <div className="text-sm font-bold text-slate-900">
-                          Le {(item.price * item.quantity).toLocaleString()}
+                          Le {Math.round(item.price * item.quantity).toLocaleString()}
                        </div>
                     </div>
                  ))}
@@ -786,16 +786,16 @@ export default function POSPage() {
               <div className="pt-4 border-t border-slate-100 space-y-2">
                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     <span>Subtotal</span>
-                    <span>Le {((lastSale?.totalAmount || 0) / 1.15).toLocaleString()}</span>
+                    <span>Le {Math.round((lastSale?.totalAmount || 0) / 1.15).toLocaleString()}</span>
                  </div>
                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     <span>Tax (15%)</span>
-                    <span>Le {((lastSale?.totalAmount || 0) - ((lastSale?.totalAmount || 0) / 1.15)).toLocaleString()}</span>
+                    <span>Le {Math.round((lastSale?.totalAmount || 0) - ((lastSale?.totalAmount || 0) / 1.15)).toLocaleString()}</span>
                  </div>
                  <div className="flex justify-between items-end pt-2">
                     <div className="space-y-1">
                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Total Amount</span>
-                       <div className="text-3xl font-bold text-slate-900">Le {lastSale?.totalAmount.toLocaleString()}</div>
+                       <div className="text-3xl font-bold text-slate-900">Le {Math.round(lastSale?.totalAmount).toLocaleString()}</div>
                     </div>
                     <div className="h-10 w-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
                        {lastSale?.paymentMethod === 'CASH' ? <Wallet className="h-5 w-5 text-blue-500" /> : <Smartphone className="h-5 w-5 text-emerald-500" />}

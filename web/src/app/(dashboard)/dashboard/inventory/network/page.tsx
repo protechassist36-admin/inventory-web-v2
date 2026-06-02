@@ -81,7 +81,7 @@ export default function NetworkSourcingPage() {
             </div>
          </Card>
          
-         <Tabs value={filterType} onValueChange={(v: string | null) => setFilterType((v as any) ?? "ALL")} className="w-full lg:w-auto">
+         <Tabs value={filterType} onValueChange={(v: string | null) => setFilterType((v ?? "ALL") as "ALL" | "PRODUCT" | "SERVICE")} className="w-full lg:w-auto">
             <TabsList className="h-14 p-1 bg-white rounded-2xl shadow-sm border-none">
                <TabsTrigger value="ALL" className="px-6 rounded-xl font-black text-[10px] uppercase tracking-widest">All Nodes</TabsTrigger>
                <TabsTrigger value="PRODUCT" className="px-6 rounded-xl font-black text-[10px] uppercase tracking-widest gap-2">
