@@ -18,13 +18,18 @@ export interface LocalCategory {
 export interface PendingSale {
   id?: number;
   items: {
-    productId: string;
+    productId?: string;
+    productName: string;
     quantity: number;
     unitPrice: number;
     total: number;
+    isExternalSourced?: boolean;
+    externalSourceName?: string;
+    externalCostPrice?: number;
   }[];
   totalAmount: number;
   paymentMethod: string;
+  paymentStatus: string;
   createdAt: number;
   synced: boolean;
 }

@@ -170,7 +170,7 @@ export default function SalesHistoryPage() {
                  />
               </div>
               <div className="flex gap-2">
-                 <Select value={filterRange} onValueChange={setFilterRange}>
+                 <Select value={filterRange} onValueChange={(val: string | null) => setFilterRange(val || "TODAY")}>
                    <SelectTrigger className="h-12 rounded-2xl w-[180px] border-slate-200 bg-white font-bold text-[10px] uppercase tracking-widest text-slate-500">
                      <SelectValue />
                    </SelectTrigger>

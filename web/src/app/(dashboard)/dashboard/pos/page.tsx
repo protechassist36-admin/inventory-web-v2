@@ -151,7 +151,7 @@ export default function POSPage() {
   const filteredProducts = products?.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (p.barcode && p.barcode.includes(searchQuery))
+    ((p as any).barcode && (p as any).barcode.includes(searchQuery))
   );
 
   const total = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart]);
@@ -640,7 +640,7 @@ export default function POSPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer</Label>
-                    <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+                    <Select value={selectedCustomer} onValueChange={(val: string | null) => setSelectedCustomer(val || "WALKIN")}>
                       <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white text-slate-900 shadow-sm px-3">
                         <SelectValue placeholder="Walk-in Customer" />
                       </SelectTrigger>

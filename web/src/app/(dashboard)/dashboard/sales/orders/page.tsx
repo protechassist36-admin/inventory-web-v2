@@ -650,7 +650,7 @@ export default function SalesOrdersPage() {
                                  <div className="p-8 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] space-y-6">
                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Update Order State</p>
                                     <div className="space-y-4">
-                                       <Select value={newStatus} onValueChange={setNewStatus}>
+                                       <Select value={newStatus} onValueChange={(val: string | null) => setNewStatus(val || "PENDING")}>
                                           <SelectTrigger className="h-14 rounded-xl border-slate-200 bg-white font-black uppercase text-[10px] tracking-widest shadow-sm">
                                              <SelectValue placeholder="Select New Status" />
                                           </SelectTrigger>

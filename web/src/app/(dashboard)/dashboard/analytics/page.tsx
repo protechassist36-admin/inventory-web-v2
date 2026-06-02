@@ -86,7 +86,15 @@ export default function AnalyticsPage() {
     return acc;
   }, []).sort((a, b) => b.value - a.value).slice(0, 5);
 
-  const PIE_COLORS = [colors.hex, '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e'];
+  // Map primary Tailwind class to hex for chart compatibility
+  const getPrimaryHex = (tailwindClass: string) => {
+    if (tailwindClass.includes('indigo')) return '#4f46e5';
+    if (tailwindClass.includes('rose')) return '#e11d48';
+    if (tailwindClass.includes('emerald')) return '#059669';
+    return '#2563eb'; // Default blue
+  };
+
+  const PIE_COLORS = [getPrimaryHex(colors.primary), '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e'];
 
   // 3. Top Moving Products (Bar Chart)
   const productPerformance = products
@@ -206,7 +214,7 @@ export default function AnalyticsPage() {
               description="Systemized daily revenue tracking (14 day cycle)"
               dataKey="value"
               categoryKey="name"
-              color={colors.hex}
+              color={getPrimaryHex(colors.primary)}
             />
          </motion.div>
 
@@ -315,7 +323,7 @@ export default function AnalyticsPage() {
                           animationDuration={2000}
                         >
                            {productPerformance.map((entry, index) => (
-                             <Cell key={`cell-${index}`} fill={index % 2 === 0 ? colors.hex : '#6366f1'} fillOpacity={0.8} />
+                             <Cell key={`cell-${index}`} fill={index % 2 === 0 ? getPrimaryHex(colors.primary) : '#6366f1'} fillOpacity={0.8} />
                            ))}
                         </Bar>
                       </BarChart>

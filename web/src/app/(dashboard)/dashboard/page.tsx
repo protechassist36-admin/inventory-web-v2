@@ -135,6 +135,13 @@ export default function DashboardPage() {
     }
   };
 
+  const getPrimaryHex = (tailwindClass: string) => {
+    if (tailwindClass.includes('indigo')) return '#4f46e5';
+    if (tailwindClass.includes('rose')) return '#e11d48';
+    if (tailwindClass.includes('emerald')) return '#059669';
+    return '#2563eb'; // Default blue
+  };
+
   const context = getContextInfo();
 
   return (
@@ -262,7 +269,7 @@ export default function DashboardPage() {
             description="Intelligence performance tracking (last 7 days)"
             dataKey="value"
             categoryKey="name"
-            color={colors.hex}
+            color={getPrimaryHex(colors.primary)}
           />
         </motion.div>
 

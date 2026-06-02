@@ -264,8 +264,8 @@ export default function ProductsPage() {
                    <div className="space-y-2">
                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Classification</Label>
                      <Select 
-                       value={formData.categoryId} 
-                       onValueChange={(val) => setFormData({ ...formData, categoryId: val })}
+                       value={formData.categoryId || ""} 
+                       onValueChange={(val: string | null) => setFormData({ ...formData, categoryId: val || "" })}
                      >
                        <SelectTrigger className="h-12 rounded-xl border-slate-100 bg-slate-50">
                          <SelectValue placeholder="Categorize item" />
