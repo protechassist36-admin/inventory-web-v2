@@ -204,12 +204,12 @@ export function ProcurementModal({
                   <Truck className="h-4 w-4 text-slate-400" />
                   <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Primary Supplier</Label>
                 </div>
-                <Select value={form.watch("supplierId")} onValueChange={(val) => form.setValue("supplierId", val)}>
+                <Select value={form.watch("supplierId")} onValueChange={(val: string | null) => form.setValue("supplierId", val ?? "")}>
                   <SelectTrigger className="h-12 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 transition-all focus:ring-2 focus:ring-slate-950 dark:focus:ring-slate-400">
                     <SelectValue placeholder="Select a supplier" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800">
-                    {suppliers.map((s) => (
+                    {suppliers.map((s: any) => (
                       <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>

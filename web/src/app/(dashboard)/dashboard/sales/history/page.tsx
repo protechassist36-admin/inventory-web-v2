@@ -166,16 +166,16 @@ export default function SalesHistoryPage() {
                    placeholder="Search invoice or customer..." 
                    className="h-12 pl-12 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all"
                    value={searchQuery}
-                   onChange={(e) => setSearchQuery(e.target.value)}
+                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                  />
               </div>
               <div className="flex gap-2">
-                 <Select value={filterRange} onValueChange={(val: string | null) => setFilterRange(val || "TODAY")}>
+                 <Select value={filterRange} onValueChange={(val: string | null) => setFilterRange(val ?? "TODAY")}>
                    <SelectTrigger className="h-12 rounded-2xl w-[180px] border-slate-200 bg-white font-bold text-[10px] uppercase tracking-widest text-slate-500">
                      <SelectValue />
                    </SelectTrigger>
                    <SelectContent className="rounded-2xl border-slate-200 bg-white shadow-xl">
-                     {ranges.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                     {ranges.map((r: any) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
                    </SelectContent>
                  </Select>
               </div>

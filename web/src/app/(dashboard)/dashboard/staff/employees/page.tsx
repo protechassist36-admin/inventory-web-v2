@@ -150,15 +150,15 @@ export default function EmployeesPage() {
               <form onSubmit={handleAdd} className="p-8 space-y-5">
                  <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Full Name</Label>
-                    <Input required className="h-12 rounded-xl" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                    <Input required className="h-12 rounded-xl" value={formData.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, name: e.target.value})} />
                  </div>
                  <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address</Label>
-                    <Input required type="email" className="h-12 rounded-xl" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                    <Input required type="email" className="h-12 rounded-xl" value={formData.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, email: e.target.value})} />
                  </div>
                  <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Access Key (Password)</Label>
-                    <Input required type="password" title="Set employee password"  className="h-12 rounded-xl" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                    <Input required type="password" title="Set employee password"  className="h-12 rounded-xl" value={formData.password} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, password: e.target.value})} />
                  </div>
                  <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Intelligence Role</Label>

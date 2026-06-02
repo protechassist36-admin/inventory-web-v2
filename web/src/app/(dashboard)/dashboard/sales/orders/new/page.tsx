@@ -164,15 +164,18 @@ export default function NewSalesOrderPage() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end mb-8">
                <div className="md:col-span-5 space-y-1">
                  <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Asset</Label>
-                 <Select onValueChange={(val) => {
+                 <Select onValueChange={(val: string | null) => {
+                    if (!val) return;
                     const prod = products.find(p => p.id === val);
-                    setNewItem({ productId: prod.id, name: prod.name, quantity: 1, price: prod.unitPrice });
+                    if (prod) {
+                      setNewItem({ productId: prod.id, name: prod.name, quantity: 1, price: prod.unitPrice });
+                    }
                   }}>
                     <SelectTrigger className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black uppercase text-[10px] tracking-widest text-slate-900">
                       <SelectValue placeholder="Select Asset..." />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      {products.map(p => <SelectItem key={p.id} value={p.id} className="font-bold uppercase text-[10px]">{p.name}</SelectItem>)}
+                      {products.map((p: any) => <SelectItem key={p.id} value={p.id} className="font-bold uppercase text-[10px]">{p.name}</SelectItem>)}
                     </SelectContent>
                  </Select>
                </div>

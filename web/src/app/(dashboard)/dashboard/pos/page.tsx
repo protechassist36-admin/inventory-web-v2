@@ -640,19 +640,19 @@ export default function POSPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer</Label>
-                    <Select value={selectedCustomer} onValueChange={(val: string | null) => setSelectedCustomer(val || "WALKIN")}>
+                    <Select value={selectedCustomer} onValueChange={(val: string | null) => setSelectedCustomer(val ?? "WALKIN")}>
                       <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white text-slate-900 shadow-sm px-3">
                         <SelectValue placeholder="Walk-in Customer" />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200 bg-white text-slate-900 shadow-xl">
                         <SelectItem value="WALKIN" className="font-bold">Walk-in Customer</SelectItem>
-                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        {customers.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment</Label>
-                    <Select value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)}>
+                    <Select value={paymentMethod} onValueChange={(v: string | null) => setPaymentMethod(v ?? "CASH")}>
                       <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white text-slate-900 shadow-sm px-3">
                         <SelectValue />
                       </SelectTrigger>
@@ -667,7 +667,7 @@ export default function POSPage() {
                 
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment Status</Label>
-                  <Tabs value={paymentStatus} onValueChange={(val: any) => setPaymentStatus(val)} className="w-full">
+                  <Tabs value={paymentStatus} onValueChange={(val: string | null) => setPaymentStatus(val ?? "PAID")} className="w-full">
                     <TabsList className="grid grid-cols-3 h-11 rounded-lg bg-slate-100 border border-slate-200 p-1">
                       <TabsTrigger value="PAID" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all">Fully Paid</TabsTrigger>
                       <TabsTrigger value="PARTIAL" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm transition-all">Partial</TabsTrigger>

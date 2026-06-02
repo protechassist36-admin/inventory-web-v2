@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { getSubscription, createSubscription } from "@/lib/actions/subscription";
-import { getUsers, createUser, deleteUser, changePassword } from "@/lib/actions/user";
+import { getUsers, createUser, deleteUser, changePassword, getRoles } from "@/lib/actions/user";
 import { useSession } from "next-auth/react";
 import { cn, getIndustryColor } from "@/lib/utils";
 
@@ -57,6 +57,7 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const [subscription, setSubscription] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const businessType = session?.user?.businessType || "SHOP";
@@ -73,9 +74,17 @@ export default function SettingsPage() {
   async function fetchData() {
     try {
       setLoading(true);
-      const [sub, team] = await Promise.all([getSubscription(), getUsers()]);
+      const [sub, team, rolesData] = await Promise.all([
+        getSubscription(), 
+        getUsers(),
+        getRoles()
+      ]);
       setSubscription(sub);
       setUsers(team);
+      setRoles(rolesData);
+      if (rolesData.length > 0 && !userData.roleId) {
+        setUserData(prev => ({ ...prev, roleId: rolesData[0].id }));
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -227,7 +236,7 @@ export default function SettingsPage() {
                           <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Full Name</Label>
                           <Input 
                             value={userData.name}
-                            onChange={e => setUserData({...userData, name: e.target.value})}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserData({...userData, name: e.target.value})}
                             placeholder="Employee name" 
                             className="h-11 rounded-xl bg-slate-50 border-slate-100" 
                             required 
@@ -238,7 +247,7 @@ export default function SettingsPage() {
                           <Input 
                             type="email"
                             value={userData.email}
-                            onChange={e => setUserData({...userData, email: e.target.value})}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserData({...userData, email: e.target.value})}
                             placeholder="user@business.com" 
                             className="h-11 rounded-xl bg-slate-50 border-slate-100" 
                             required 
@@ -249,7 +258,7 @@ export default function SettingsPage() {
                           <Input 
                             type="password"
                             value={userData.password}
-                            onChange={e => setUserData({...userData, password: e.target.value})}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserData({...userData, password: e.target.value})}
                             className="h-11 rounded-xl bg-slate-50 border-slate-100 font-black" 
                             required 
                           />
@@ -258,13 +267,13 @@ export default function SettingsPage() {
                           <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Role Access</Label>
                           <Select 
                             value={userData.roleId}
-                            onValueChange={val => setUserData({...userData, roleId: val})}
+                            onValueChange={(val: string | null) => setUserData({...userData, roleId: val ?? ""})}
                           >
                              <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100">
                                 <SelectValue />
                              </SelectTrigger>
                              <SelectContent className="rounded-xl">
-                                {roles.map(r => (
+                                {roles.map((r: any) => (
                                   <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                                 ))}
                              </SelectContent>
@@ -283,7 +292,7 @@ export default function SettingsPage() {
                  </CardHeader>
                  <CardContent className="p-0">
                     <div className="divide-y divide-slate-50">
-                       {users.map(u => (
+                       {users.map((u: any) => (
                          <div key={u.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors group">
                             <div className="flex items-center gap-4">
                                <div className="h-12 w-12 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center font-black text-slate-400">
@@ -326,7 +335,7 @@ export default function SettingsPage() {
         {/* Subscription Tab */}
         <TabsContent value="subscription">
            <div className="grid gap-8 lg:grid-cols-3 max-w-7xl mx-auto py-4">
-              {PLANS.map((p) => {
+              {PLANS.map((p: any) => {
                 const isActive = (subscription?.plan || "FREE") === p.id;
                 return (
                   <Card key={p.id} className={cn(
@@ -343,7 +352,7 @@ export default function SettingsPage() {
                       Le {p.price}<span className="text-xs font-black text-slate-300 ml-2">/ month</span>
                     </div>
                     <ul className="space-y-6 mb-12 flex-1">
-                      {p.features.map(f => (
+                      {p.features.map((f: string) => (
                         <li key={f} className="flex items-center gap-4 text-xs font-black text-slate-700">
                           <Check className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "text-slate-200")} /> {f}
                         </li>

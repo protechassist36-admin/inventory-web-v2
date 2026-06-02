@@ -76,12 +76,12 @@ export default function NetworkSourcingPage() {
                 placeholder="Search products, services, or partner businesses..." 
                 className="pl-10 h-11 rounded-xl border-none bg-slate-50 focus:bg-white text-sm font-bold"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               />
             </div>
          </Card>
          
-         <Tabs value={filterType} onValueChange={(v: any) => setFilterType(v)} className="w-full lg:w-auto">
+         <Tabs value={filterType} onValueChange={(v: string | null) => setFilterType((v as any) ?? "ALL")} className="w-full lg:w-auto">
             <TabsList className="h-14 p-1 bg-white rounded-2xl shadow-sm border-none">
                <TabsTrigger value="ALL" className="px-6 rounded-xl font-black text-[10px] uppercase tracking-widest">All Nodes</TabsTrigger>
                <TabsTrigger value="PRODUCT" className="px-6 rounded-xl font-black text-[10px] uppercase tracking-widest gap-2">
@@ -97,7 +97,7 @@ export default function NetworkSourcingPage() {
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {loading ? (
-          [1,2,3,4,5,6].map(i => (
+          [1,2,3,4,5,6].map((i: number) => (
             <Card key={i} className="h-64 rounded-3xl animate-pulse bg-slate-100 border-none" />
           ))
         ) : filteredItems.length === 0 ? (

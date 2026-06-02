@@ -215,7 +215,7 @@ export default function SalesOrdersPage() {
             </div>
             
             <div className="flex gap-4 items-center">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm">
+                <Tabs value={activeTab} onValueChange={(v: string | null) => setActiveTab(v ?? "summary")} className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm">
                   <TabsList className="bg-transparent border-none p-0">
                     <TabsTrigger value="summary" className="px-8 h-10 rounded-xl font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all">Overview</TabsTrigger>
                     <TabsTrigger value="orders" className="px-8 h-10 rounded-xl font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all">Orders</TabsTrigger>

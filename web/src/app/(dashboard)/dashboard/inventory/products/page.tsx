@@ -238,7 +238,7 @@ export default function ProductsPage() {
                      <input 
                        type="checkbox"
                        checked={formData.isNetworkAvailable}
-                       onChange={(e) => setFormData({ ...formData, isNetworkAvailable: e.target.checked })}
+                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, isNetworkAvailable: e.target.checked })}
                        className="h-5 w-5 rounded-lg border-indigo-200 text-indigo-600 focus:ring-indigo-500"
                      />
                    </div>
@@ -246,7 +246,7 @@ export default function ProductsPage() {
                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Designation</Label>
                      <Input
                        value={formData.name}
-                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
                        placeholder={isBar ? "e.g. Star Beer 600ml" : "Enter designation"}
                        className="h-12 rounded-xl border-slate-100 bg-slate-50 focus:bg-white font-bold"
                        required
@@ -256,7 +256,7 @@ export default function ProductsPage() {
                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">SKU / Signature</Label>
                      <Input
                        value={formData.sku}
-                       onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, sku: e.target.value })}
                        placeholder="Scan or enter ID"
                        className="h-12 rounded-xl border-slate-100 bg-slate-50 focus:bg-white font-mono text-xs"
                      />
@@ -265,14 +265,14 @@ export default function ProductsPage() {
                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Classification</Label>
                      <Select 
                        value={formData.categoryId || ""} 
-                       onValueChange={(val: string | null) => setFormData({ ...formData, categoryId: val || "" })}
+                       onValueChange={(val: string | null) => setFormData({ ...formData, categoryId: val ?? "" })}
                      >
                        <SelectTrigger className="h-12 rounded-xl border-slate-100 bg-slate-50">
                          <SelectValue placeholder="Categorize item" />
                        </SelectTrigger>
                        <SelectContent className="rounded-xl border-slate-100">
                          <SelectItem value="none">Uncategorized</SelectItem>
-                         {categories.map((c) => (
+                         {categories.map((c: any) => (
                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                          ))}
                        </SelectContent>
