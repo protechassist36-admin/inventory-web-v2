@@ -69,15 +69,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
     async session({ session, token }) {
+      console.log("DEBUG: Session callback - token:", token);
       if (token.sub && session.user) session.user.id = token.sub as string;
       if (token.businessId && session.user) session.user.businessId = token.businessId as string;
-      if (token.role && session.user) session.user.role = token.role as string;
+      if (token.role && session.user) {
+        session.user.role = token.role as string;
+        console.log("DEBUG: Session callback - assigned role to session:", session.user.role);
+      } else {
+        console.log("DEBUG: Session callback - role NOT found in token");
+      }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
-        token.businessId = user.businessId;
-        token.role = user.role;
+        console.log("DEBUG: JWT callback - user provided, assigning:", user);
+        token.businessId = (user as any).businessId;
+        token.role = (user as any).role;
+      } else {
+        console.log("DEBUG: JWT callback - no user, preserving token:", token);
       }
       return token;
     },
