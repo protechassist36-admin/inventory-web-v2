@@ -114,18 +114,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const relConfig = getRelationshipsConfig();
 
+  const userRole = session?.user?.role || "STAFF";
+
+  const isSuperAdmin = userRole === "SUPERADMIN";
+  const isAdmin = userRole === "ADMIN" || isSuperAdmin;
+
   const navGroups = [
     {
       label: "Intelligence",
       items: [
         { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
-        { title: "Intelligence Hub", url: "/dashboard/registry", icon: ShieldCheck },
-        { title: "Analytics", url: "/dashboard/analytics", icon: ActivityIcon },
-        { title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
+        { title: "Intelligence Hub", url: "/dashboard/registry", icon: ShieldCheck, hidden: !isAdmin },
+        { title: "Analytics", url: "/dashboard/analytics", icon: ActivityIcon, hidden: !isAdmin },
+        { title: "Reports", url: "/dashboard/reports", icon: BarChart3, hidden: !isAdmin },
       ]
     },
     {
       label: "Supply Chain",
+      hidden: !isAdmin,
       items: [
         {
           title: "Inventory",
@@ -181,6 +187,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     {
       label: "Finance",
+      hidden: !isAdmin,
       items: [
         {
           title: "Accounting",
@@ -197,6 +204,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     {
       label: "Administrative",
+      hidden: !isAdmin,
       items: [
         {
           title: "Team / HR",
@@ -226,7 +234,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         { title: "System Manual", url: "/dashboard/manual", icon: Book },
       ]
     }
-  ];
+  ].filter(group => !group.hidden);
 
   if (!mounted) {
     return <Sidebar collapsible="icon" className="border-r border-slate-100 dark:border-slate-800 shadow-sm" {...props} />;
@@ -271,7 +279,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <div key={group.label} className="space-y-2">
               <div className="px-4 text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em] mb-3">{group.label}</div>
               <div className="space-y-1">
-                {group.items.map((item: any) => {
+                {group.items.filter(item => !item.hidden).map((item: any) => {
                   const isActive = pathname.startsWith(item.url) && (item.url !== "/dashboard" || pathname === "/dashboard");
                   const Icon = item.icon;
                   return (

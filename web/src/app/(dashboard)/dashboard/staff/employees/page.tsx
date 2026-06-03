@@ -45,16 +45,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getUsers, getRoles, createUser, deleteUser } from "@/lib/actions/user";
+import { getPermissions } from "@/lib/actions/role";
 import { format } from "date-fns";
 import { cn, getIndustryColor } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function EmployeesPage() {
   const { data: session } = useSession();
   const [users, setUsers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
+  const [permissions, setPermissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -63,7 +66,8 @@ export default function EmployeesPage() {
     name: "",
     email: "",
     password: "",
-    roleId: ""
+    roleId: "",
+    selectedPermissions: [] as string[]
   });
 
   const businessType = session?.user?.businessType || "SHOP";
@@ -76,17 +80,19 @@ export default function EmployeesPage() {
   async function fetchData() {
     try {
       setLoading(true);
-      const [userData, rolesData] = await Promise.all([
+      const [userData, rolesData, permissionsData] = await Promise.all([
         getUsers(),
-        getRoles()
+        getRoles(),
+        getPermissions()
       ]);
       setUsers(userData);
       setRoles(rolesData);
+      setPermissions(permissionsData);
       if (rolesData.length > 0 && !formData.roleId) {
         setFormData(prev => ({ ...prev, roleId: rolesData[0].id }));
       }
     } catch (error) {
-      toast.error("Failed to sync employee nodes.");
+      toast.error("Failed to sync personnel data.");
     } finally {
       setLoading(false);
     }
@@ -98,7 +104,7 @@ export default function EmployeesPage() {
       await createUser(formData);
       toast.success("Employee node initialized successfully.");
       setIsAddOpen(false);
-      setFormData({ name: "", email: "", password: "", roleId: roles[0]?.id || "" });
+      setFormData({ name: "", email: "", password: "", roleId: roles[0]?.id || "", selectedPermissions: [] });
       fetchData();
     } catch (error: any) {
       toast.error(error.message || "Failed to initialize employee node.");
@@ -173,6 +179,30 @@ export default function EmployeesPage() {
                        </SelectContent>
                     </Select>
                  </div>
+                 
+                 <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Granular Permissions</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {permissions.map((p) => (
+                        <div key={p.id} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={p.id} 
+                            checked={formData.selectedPermissions.includes(p.id)}
+                            onCheckedChange={(checked) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                selectedPermissions: checked 
+                                  ? [...prev.selectedPermissions, p.id]
+                                  : prev.selectedPermissions.filter(id => id !== p.id)
+                              }));
+                            }}
+                          />
+                          <Label htmlFor={p.id} className="text-xs cursor-pointer">{p.key}</Label>
+                        </div>
+                      ))}
+                    </div>
+                 </div>
+
                  <Button type="submit" className={cn("w-full h-14 rounded-2xl text-white font-black uppercase tracking-widest shadow-xl mt-4", colors.primary)}>
                     Finalize Initialization
                  </Button>

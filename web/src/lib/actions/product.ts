@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "./notification";
+import { canPerformAction } from "@/lib/subscriptions";
+import { checkAccess } from "@/lib/rbac";
 
 export async function getProducts() {
   try {
@@ -16,7 +18,6 @@ export async function getProducts() {
       orderBy: { createdAt: "desc" },
     });
 
-    // Serialize Decimals and Dates for Client Components - Manually map to avoid non-serializable fields
     return products.map(p => ({
       id: p.id,
       name: p.name,
@@ -51,9 +52,27 @@ export async function getProducts() {
 export async function createProduct(data: any) {
   try {
     const session = await auth();
-    if (!session?.user?.businessId) throw new Error("Unauthorized");
+    if (!session?.user?.id || !session?.user?.businessId) throw new Error("Unauthorized");
 
-    // Destructure to separate schema fields from metadata/extra fields
+    // 1. RBAC Check
+    const access = await checkAccess(session.user.id, session.user.businessId, "product:create");
+    if (!access.allowed) throw new Error(access.message);
+
+    // 2. Subscription Limit Check
+    const business = await prisma.business.findUnique({
+      where: { id: session.user.businessId },
+      select: { plan: true }
+    });
+    
+    const productCount = await prisma.product.count({
+      where: { businessId: session.user.businessId }
+    });
+
+    const check = canPerformAction(business?.plan || "FREE", "maxProducts", productCount);
+    if (!check.allowed) {
+      throw new Error(check.message);
+    }
+    
     const { 
       name, 
       sku, 
@@ -85,7 +104,6 @@ export async function createProduct(data: any) {
       },
     });
 
-    // CHECK FOR LOW STOCK
     if (product.stockQuantity <= product.minStockLevel) {
        await createNotification({
           title: "Low Stock Alert",
@@ -96,7 +114,6 @@ export async function createProduct(data: any) {
 
     revalidatePath("/dashboard/inventory/products");
     
-    // Return a plain object to avoid Decimal serialization issues
     return {
       ...product,
       unitPrice: product.unitPrice.toNumber(),
@@ -146,7 +163,6 @@ export async function updateProduct(id: string, data: any) {
       },
     });
 
-    // CHECK FOR LOW STOCK
     if (product.stockQuantity <= product.minStockLevel) {
        await createNotification({
           title: "Low Stock Alert",
@@ -157,7 +173,6 @@ export async function updateProduct(id: string, data: any) {
 
     revalidatePath("/dashboard/inventory/products");
     
-    // Return a plain object to avoid Decimal serialization issues
     return {
       ...product,
       unitPrice: product.unitPrice.toNumber(),

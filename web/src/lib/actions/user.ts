@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcrypt";
 import { generateVerificationToken, sendVerificationEmail } from "@/lib/mail";
+import { canPerformAction } from "@/lib/subscriptions";
 
 export async function getUsers() {
   try {
@@ -56,7 +57,7 @@ export async function getRoles() {
   }
 }
 
-export async function createUser(data: { name: string; email: string; password: string; roleId: string }) {
+export async function createUser(data: { name: string; email: string; password: string; roleId: string; selectedPermissions: string[] }) {
   try {
     const session = await auth();
     if (!session?.user?.businessId) throw new Error("Unauthorized");
@@ -64,7 +65,7 @@ export async function createUser(data: { name: string; email: string; password: 
     const businessId = session.user.businessId;
     const prisma = getTenantPrisma(businessId);
 
-    // 1. Check Plan Limits using globalPrisma to see other users
+    // 1. Check Plan Limits
     const business = await globalPrisma.business.findUnique({
       where: { id: businessId },
       select: { plan: true, _count: { select: { users: true } } }
@@ -73,59 +74,44 @@ export async function createUser(data: { name: string; email: string; password: 
     const userCount = business?._count.users || 0;
     const plan = business?.plan || "FREE";
 
-    if (plan === "FREE" && userCount >= 1) {
-      throw new Error("Essential plan is limited to 1 user. Please upgrade.");
-    }
-    if (plan === "BASIC" && userCount >= 5) {
-      throw new Error("Professional plan is limited to 5 users. Please upgrade.");
+    const check = canPerformAction(plan, "maxStaff", userCount);
+    if (!check.allowed) {
+      throw new Error(check.message);
     }
 
-    // 2. Check for duplicate email (Globally)
-    const existingUser = await globalPrisma.user.findUnique({
-      where: { email: data.email },
-    });
-
-    if (existingUser) {
-      throw new Error("A user with this email address already exists.");
-    }
-
-    // 3. Hash Password
+    // 2. Hash Password and create User
     const passwordHash = await bcrypt.hash(data.password, 10);
     const verificationToken = generateVerificationToken();
 
-    let user;
-    try {
-      user = await prisma.user.create({
-        data: {
-          name: data.name,
-          email: data.email,
-          passwordHash,
-          roleId: data.roleId,
-          businessId: businessId,
-          verificationToken,
-        },
-      });
-    } catch (error: any) {
-      // Handle potential race condition unique constraint violation
-      if (error.code === 'P2002') {
-        throw new Error("A user with this email address already exists.");
+    // 3. Update Role permissions based on selection
+    await prisma.role.update({
+      where: { id: data.roleId },
+      data: {
+        permissions: {
+          set: data.selectedPermissions.map(id => ({ id }))
+        }
       }
-      throw error;
-    }
+    });
 
-    // Send verification email
+    const user = await prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        passwordHash,
+        roleId: data.roleId,
+        businessId: businessId,
+        verificationToken,
+      },
+    });
+
     await sendVerificationEmail(data.email, verificationToken);
 
     revalidatePath("/dashboard/staff/employees");
-    revalidatePath("/dashboard/settings");
     
     return {
       ...user,
-      salary: user.salary?.toNumber() || null,
-      hourlyRate: user.hourlyRate?.toNumber() || null,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
-      deletedAt: user.deletedAt?.toISOString() || null,
     };
   } catch (error) {
     console.error("Failed to create user:", error);
