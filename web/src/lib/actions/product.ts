@@ -10,6 +10,7 @@ import { checkAccess } from "@/lib/rbac";
 export async function getProducts() {
   try {
     const session = await auth();
+    console.log("DEBUG: getProducts session:", !!session, "User ID:", session?.user?.id);
     if (!session?.user?.businessId) throw new Error("Unauthorized");
 
     const products = await prisma.product.findMany({

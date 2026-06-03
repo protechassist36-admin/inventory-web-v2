@@ -439,7 +439,7 @@ export default function POSPage() {
           
           {/* CATALOG AREA */}
           <div 
-            className="flex-1 w-full overflow-y-auto px-2 sm:px-6 pb-24 custom-scrollbar"
+            className="flex-1 w-full overflow-y-auto px-2 sm:px-6 pb-24 custom-scrollbar border-4 border-red-500 bg-red-50"
             style={{ display: 'flex', flexDirection: 'column', minHeight: '500px' }}
           >
             
