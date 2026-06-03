@@ -36,6 +36,8 @@ export default function EnhancedSuperAdminDashboard() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
+    } else if (status === "authenticated") {
+      fetchStats();
     }
   }, [status, router]);
 
