@@ -6,7 +6,7 @@ import { CountUp } from "@/components/shared/count-up";
 
 interface StatCardProps {
   title: string;
-  value: number;
+  value: number | string | any;
   prefix?: string;
   description: string;
   icon: LucideIcon;
@@ -17,7 +17,7 @@ interface StatCardProps {
 
 export function StatCard({ title, value, prefix = "", description, icon: Icon, colorClass, bgClass, delay = 0 }: StatCardProps) {
   // Defensive check for React Error #31
-  let displayValue = value;
+  let displayValue: any = value;
   if (typeof value === 'object' && value !== null) {
     console.error(`DEBUG: StatCard '${title}' received unexpected object:`, value);
     displayValue = JSON.stringify(value);
