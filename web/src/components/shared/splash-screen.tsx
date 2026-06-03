@@ -20,12 +20,15 @@ export const SplashScreen = () => {
             </motion.div>
             
             <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
                 className="flex flex-col items-center"
             >
-                <div className="h-10 w-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-6" />
+                <div className="relative h-16 w-16 mb-6">
+                    <div className="absolute inset-0 border-4 border-slate-700 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
                 <p className="text-white font-bold tracking-[0.2em] uppercase text-xs">Initializing Protech Super Control...</p>
             </motion.div>
         </motion.div>

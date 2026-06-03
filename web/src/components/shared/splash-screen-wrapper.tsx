@@ -15,7 +15,7 @@ export function SplashScreenWrapper({ children }: { children: React.ReactNode })
             const timer = setTimeout(() => {
                 setShowSplash(false);
                 sessionStorage.setItem('splash_shown', 'true');
-            }, 3000);
+            }, 10000);
             return () => clearTimeout(timer);
         }
     }, []);
