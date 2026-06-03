@@ -46,7 +46,7 @@ export default function RootLayout({
     >
       <head>
         <meta name="theme-color" content="#4f46e5" />
-        <link rel="apple-touch-icon" href="/images/logo2.jpeg" />
+        <link rel="apple-touch-icon" href="/images/logo2.png" />
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider
