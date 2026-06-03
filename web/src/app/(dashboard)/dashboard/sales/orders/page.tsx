@@ -254,7 +254,7 @@ export default function SalesOrdersPage() {
                 <div className="h-14 w-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500 shadow-inner"><DollarSign className="h-7 w-7" /></div>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="text-7xl font-[1000] tracking-tighter text-slate-950 italic leading-none">NLe {(summary?.totalAmount || 0).toLocaleString()}</div>
+                <div className="text-7xl font-[1000] tracking-tighter text-slate-950 italic leading-none">NLe {Math.round(summary?.totalAmount || 0).toLocaleString()}</div>
               </CardContent>
             </Card>
           </div>
@@ -289,7 +289,7 @@ export default function SalesOrdersPage() {
                            </div>
                         </div>
                         <div className="text-right flex flex-col items-end gap-1">
-                          <div className="text-xl font-black text-slate-900 tracking-tight italic">NLe {data.amount.toLocaleString()}</div>
+                          <div className="text-xl font-black text-slate-900 tracking-tight italic">NLe {Math.round(data.amount).toLocaleString()}</div>
                           <div className="px-4 py-1 rounded-full bg-slate-50 border border-slate-100 text-[10px] font-black text-indigo-600 uppercase tracking-widest shadow-sm">{percentage.toFixed(1)}% weight</div>
                         </div>
                       </div>
@@ -403,7 +403,7 @@ export default function SalesOrdersPage() {
                                         <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] mt-1.5">{format(new Date(sale.createdAt), "hh:mm:ss a")}</div>
                                     </TableCell>
                                     <TableCell className="text-right pr-12">
-                                        <div className="text-2xl font-[1000] text-slate-950 tracking-tighter italic leading-none mb-1">NLe {sale.totalAmount.toLocaleString()}</div>
+                                        <div className="text-2xl font-[1000] text-slate-950 tracking-tighter italic leading-none mb-1">NLe {Math.round(sale.totalAmount).toLocaleString()}</div>
                                         <Badge variant="outline" className="h-5 px-2 rounded-lg border-emerald-100 bg-emerald-50 text-emerald-700 text-[9px] font-black tracking-widest uppercase border-none italic">Settled</Badge>
                                     </TableCell>
                                 </TableRow>
@@ -472,7 +472,7 @@ export default function SalesOrdersPage() {
                                     >
                                         <div className="font-black text-base tracking-tighter italic leading-none">{s.invoiceNumber}</div>
                                         <div className={cn("text-[10px] font-black uppercase tracking-[0.1em] truncate", selectedSale.id === s.id ? "text-indigo-200" : "text-slate-400")}>{s.customerName}</div>
-                                        <div className={cn("text-lg font-[1000] italic mt-2 leading-none", selectedSale.id === s.id ? "text-white" : "text-indigo-600")}>NLe {s.totalAmount.toLocaleString()}</div>
+                                        <div className={cn("text-lg font-[1000] italic mt-2 leading-none", selectedSale.id === s.id ? "text-white" : "text-indigo-600")}>NLe {Math.round(s.totalAmount).toLocaleString()}</div>
                                         {selectedSale.id === s.id && <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-30"><ChevronRight size={24} /></div>}
                                     </div>
                                 ))}
@@ -525,8 +525,8 @@ export default function SalesOrdersPage() {
                                        <span>REF ID: {item.id.substring(0, 8)}</span>
                                     </div>
                                  </div>
-                                 <div className="col-span-2 text-center font-black text-slate-600 text-sm italic tracking-tighter">NLe {item.unitPrice.toLocaleString()}</div>
-                                 <div className="col-span-3 text-right font-[1000] text-slate-950 text-lg tracking-tighter italic leading-none">NLe {item.total.toLocaleString()}</div>
+                                 <div className="col-span-2 text-center font-black text-slate-600 text-sm italic tracking-tighter">NLe {Math.round(item.unitPrice).toLocaleString()}</div>
+                                 <div className="col-span-3 text-right font-[1000] text-slate-950 text-lg tracking-tighter italic leading-none">NLe {Math.round(item.total).toLocaleString()}</div>
                               </div>
                            ))}
                         </div>
@@ -535,11 +535,11 @@ export default function SalesOrdersPage() {
                         <div className="space-y-8 pt-12 mt-8 border-t-4 border-slate-950 bg-slate-50/30 p-10 rounded-[2.5rem]">
                            <div className="flex justify-between items-center text-[12px] font-black uppercase tracking-[0.4em] text-slate-400">
                               <span>Sub-Total</span>
-                              <span className="text-slate-950 font-[1000]">NLe {(selectedSale.totalAmount / 1.15).toLocaleString()}</span>
+                              <span className="text-slate-950 font-[1000]">NLe {Math.round(selectedSale.totalAmount / 1.15).toLocaleString()}</span>
                            </div>
                            <div className="flex justify-between items-center text-[12px] font-black uppercase tracking-[0.4em] text-slate-400">
                               <span>Tax Assessment (15%)</span>
-                              <span className="text-slate-950 font-[1000]">NLe {(selectedSale.totalAmount - (selectedSale.totalAmount / 1.15)).toLocaleString()}</span>
+                              <span className="text-slate-950 font-[1000]">NLe {Math.round(selectedSale.totalAmount - (selectedSale.totalAmount / 1.15)).toLocaleString()}</span>
                            </div>
                            <div className="h-[2px] bg-slate-950 w-full" />
                            <div className="flex justify-between items-end pt-8">
@@ -549,7 +549,7 @@ export default function SalesOrdersPage() {
                                     <Badge className="bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest px-6 h-8 border-none shadow-xl italic">Verified</Badge>
                                  </div>
                               </div>
-                              <span className="text-7xl font-[1000] tracking-tighter italic text-slate-950 leading-none">NLe {selectedSale.totalAmount.toLocaleString()}</span>
+                              <span className="text-7xl font-[1000] tracking-tighter italic text-slate-950 leading-none">NLe {Math.round(selectedSale.totalAmount).toLocaleString()}</span>
                            </div>
                         </div>
 
@@ -617,7 +617,7 @@ export default function SalesOrdersPage() {
                                           <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600"><AlertCircle size={18} /></div>
                                           <div>
                                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Exposure Node</p>
-                                             <p className="text-sm font-black text-slate-900 italic">NLe 0.00 Outstanding</p>
+                                             <p className="text-sm font-black text-slate-900 italic">NLe 0 Outstanding</p>
                                           </div>
                                        </div>
                                        <ShieldCheck size={16} className="text-emerald-500" />
@@ -704,7 +704,7 @@ export default function SalesOrdersPage() {
                                        <div className="font-black text-slate-950 uppercase text-sm tracking-tight mb-4 group-hover:text-indigo-600 transition-colors leading-none italic">{item.name}</div>
                                        <div className="flex justify-between items-end border-t border-slate-100/50 pt-5">
                                           <div className="text-[11px] font-[1000] text-slate-300 uppercase tracking-[0.3em]">Quantity: <span className="text-indigo-600 ml-1 italic">{item.quantity}</span></div>
-                                          <div className="text-xl font-[1000] text-slate-950 tracking-tighter italic leading-none">NLe {item.total.toLocaleString()}</div>
+                                          <div className="text-xl font-[1000] text-slate-950 tracking-tighter italic leading-none">NLe {Math.round(item.total).toLocaleString()}</div>
                                        </div>
                                     </div>
                                  ))}
@@ -724,7 +724,7 @@ export default function SalesOrdersPage() {
                                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-125 transition-transform duration-1000" />
                                  <div className="relative z-10">
                                     <p className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-500 mb-6 italic leading-none">Total Paid</p>
-                                    <div className="text-6xl font-[1000] italic tracking-tighter mb-12 leading-none">NLe {selectedSale.totalAmount.toLocaleString()}</div>
+                                    <div className="text-6xl font-[1000] italic tracking-tighter mb-12 leading-none">NLe {Math.round(selectedSale.totalAmount).toLocaleString()}</div>
                                     <div className="pt-10 border-t border-white/10 flex items-center justify-between">
                                        <div className="space-y-2">
                                           <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] leading-none">Method</p>

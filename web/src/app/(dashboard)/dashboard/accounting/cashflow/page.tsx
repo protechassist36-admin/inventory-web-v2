@@ -98,7 +98,7 @@ export default function CashFlowPage() {
                <TrendingUp size={100} />
             </div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Monthly Inflow</p>
-            <h2 className="text-4xl font-[1000] tracking-tighter">Le {data.summary.totalInflow.toLocaleString()}</h2>
+            <h2 className="text-4xl font-[1000] tracking-tighter">Le {Math.round(data.summary.totalInflow).toLocaleString()}</h2>
             <div className="mt-4 flex items-center gap-2 text-emerald-400 font-bold text-[10px] uppercase tracking-widest">
                <ArrowUpRight size={14} /> Revenue Node
             </div>
@@ -109,7 +109,7 @@ export default function CashFlowPage() {
                <TrendingDown size={100} />
             </div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-200 mb-2">Monthly Outflow</p>
-            <h2 className="text-4xl font-[1000] tracking-tighter">Le {data.summary.totalOutflow.toLocaleString()}</h2>
+            <h2 className="text-4xl font-[1000] tracking-tighter">Le {Math.round(data.summary.totalOutflow).toLocaleString()}</h2>
             <div className="mt-4 flex items-center gap-2 text-rose-100 font-bold text-[10px] uppercase tracking-widest">
                <ArrowDownRight size={14} /> Expenditure Node
             </div>
@@ -118,7 +118,7 @@ export default function CashFlowPage() {
          <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm flex flex-col justify-center">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Net Cash Position</p>
             <h2 className={cn("text-4xl font-[1000] tracking-tighter", data.summary.netCashFlow >= 0 ? "text-slate-900 dark:text-white" : "text-rose-600")}>
-               Le {data.summary.netCashFlow.toLocaleString()}
+               Le {Math.round(data.summary.netCashFlow).toLocaleString()}
             </h2>
             <div className="mt-4 flex items-center gap-2">
                <div className="h-1 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">

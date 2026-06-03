@@ -81,7 +81,7 @@ export default function CreditSalesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
          <Card className="border-none bg-slate-900 p-6 rounded-[2rem] text-white shadow-xl">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Total Receivables</p>
-            <h2 className="text-3xl font-[1000] tracking-tighter">Le {debts.filter(d => d.status !== 'PAID').reduce((sum, d) => sum + (d.totalAmount - d.paidAmount), 0).toLocaleString()}</h2>
+            <h2 className="text-3xl font-[1000] tracking-tighter">Le {Math.round(debts.filter(d => d.status !== 'PAID').reduce((sum, d) => sum + (d.totalAmount - d.paidAmount), 0)).toLocaleString()}</h2>
             <div className="mt-4 flex items-center gap-2">
                <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full bg-blue-500 w-2/3" />
@@ -168,12 +168,12 @@ export default function CreditSalesPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-xs font-black text-slate-600 dark:text-slate-400">Le {debt.totalAmount.toLocaleString()}</div>
+                          <div className="text-xs font-black text-slate-600 dark:text-slate-400">Le {Math.round(debt.totalAmount).toLocaleString()}</div>
                           <div className="text-[9px] font-medium text-slate-400 uppercase">Initialized {format(new Date(debt.createdAt), "MMM dd")}</div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-lg font-[1000] text-rose-600 tracking-tighter">Le {(debt.totalAmount - debt.paidAmount).toLocaleString()}</div>
-                          <div className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Le {debt.paidAmount.toLocaleString()} Paid</div>
+                          <div className="text-lg font-[1000] text-rose-600 tracking-tighter">Le {Math.round(debt.totalAmount - debt.paidAmount).toLocaleString()}</div>
+                          <div className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Le {Math.round(debt.paidAmount).toLocaleString()} Paid</div>
                         </TableCell>
                         <TableCell>
                            <div className={cn("inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm", 

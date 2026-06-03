@@ -182,7 +182,7 @@ export default function ExpensesPage() {
                <DollarSign size={80} />
             </div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-200 mb-2">Total Monthly Spend</p>
-            <h2 className="text-4xl font-[1000] tracking-tighter">Le {expenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString()}</h2>
+            <h2 className="text-4xl font-[1000] tracking-tighter">Le {Math.round(expenses.reduce((sum, e) => sum + e.amount, 0)).toLocaleString()}</h2>
          </Card>
          <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Highest Category</p>
@@ -245,7 +245,7 @@ export default function ExpensesPage() {
                         </div>
                      </TableCell>
                      <TableCell>
-                        <div className="text-lg font-[1000] text-rose-600 tracking-tighter">Le {e.amount.toLocaleString()}</div>
+                        <div className="text-lg font-[1000] text-rose-600 tracking-tighter">Le {Math.round(e.amount).toLocaleString()}</div>
                         <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{e.paymentMethod}</div>
                      </TableCell>
                      <TableCell className="text-right pr-8">

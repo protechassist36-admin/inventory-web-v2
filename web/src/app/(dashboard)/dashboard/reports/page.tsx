@@ -127,7 +127,7 @@ export default function ReportsPage() {
               </CardTitle>
            </CardHeader>
            <CardContent>
-              <div className="text-3xl font-[1000] text-slate-900 tracking-tighter">Le {totalRevenue.toLocaleString()}</div>
+              <div className="text-3xl font-[1000] text-slate-900 tracking-tighter">Le {Math.round(totalRevenue).toLocaleString()}</div>
               <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-emerald-500 uppercase tracking-tighter">
                  <TrendingUp className="h-3 w-3" /> +12.5% from last month
               </div>
@@ -140,7 +140,7 @@ export default function ReportsPage() {
               </CardTitle>
            </CardHeader>
            <CardContent>
-              <div className="text-3xl font-[1000] text-slate-900 tracking-tighter">Le {analytics.totalCost.toLocaleString()}</div>
+              <div className="text-3xl font-[1000] text-slate-900 tracking-tighter">Le {Math.round(analytics.totalCost).toLocaleString()}</div>
               <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase">Direct material expenses</p>
            </CardContent>
         </Card>
@@ -151,7 +151,7 @@ export default function ReportsPage() {
               </CardTitle>
            </CardHeader>
            <CardContent>
-              <div className="text-3xl font-[1000] tracking-tighter">Le {grossProfit.toLocaleString()}</div>
+              <div className="text-3xl font-[1000] tracking-tighter">Le {Math.round(grossProfit).toLocaleString()}</div>
               <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-emerald-400 uppercase tracking-tighter">
                  Margin: {margin.toFixed(1)}%
               </div>
@@ -165,7 +165,7 @@ export default function ReportsPage() {
            </CardHeader>
            <CardContent>
               <div className="text-3xl font-[1000] text-slate-900 tracking-tighter">{sales.length} Sales</div>
-              <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase">Average Ticket: Le {(totalRevenue / (sales.length || 1)).toLocaleString()}</p>
+              <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase">Average Ticket: Le {Math.round(totalRevenue / (sales.length || 1)).toLocaleString()}</p>
            </CardContent>
         </Card>
       </div>
@@ -221,7 +221,7 @@ export default function ReportsPage() {
                            </div>
                         </div>
                         <div className="text-right">
-                           <div className="font-black text-slate-900">Le {p.revenue.toLocaleString()}</div>
+                           <div className="font-black text-slate-900">Le {Math.round(p.revenue).toLocaleString()}</div>
                            <div className="w-24 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
                               <div 
                                  className={cn("h-full rounded-full", COLORS[i % COLORS.length])} 
@@ -269,7 +269,7 @@ export default function ReportsPage() {
                            </div>
                         </TableCell>
                         <TableCell>
-                           <div className="font-black text-primary">Le {sale.totalAmount.toLocaleString()}</div>
+                           <div className="font-black text-primary">Le {Math.round(sale.totalAmount).toLocaleString()}</div>
                         </TableCell>
                         <TableCell className="text-right pr-8">
                            <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-tighter">

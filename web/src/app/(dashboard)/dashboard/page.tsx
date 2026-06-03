@@ -408,7 +408,7 @@ export default function DashboardPage() {
                           </div>
                           <div className="flex flex-col items-end gap-1.5">
                              <div className="font-[1000] text-xl text-slate-900 dark:text-white tracking-tighter">
-                                Le {parseFloat(sale.totalAmount).toLocaleString()}
+                                Le {Math.round(parseFloat(sale.totalAmount)).toLocaleString()}
                              </div>
                              <div className={cn("px-2.5 py-1 rounded-lg text-[9px] font-[1000] uppercase tracking-widest shadow-sm", 
                                 sale.paymentStatus === "PAID" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400")}>
@@ -479,11 +479,11 @@ export default function DashboardPage() {
                           <div className="flex-1">
                              <div className="text-xs font-black text-slate-900 uppercase tracking-tight mb-1">{item.product?.name || 'Unknown Product'}</div>
                              <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-                                {item.quantity} x Le {item.unitPrice.toLocaleString()}
+                                {item.quantity} x Le {Math.round(item.unitPrice).toLocaleString()}
                              </div>
                           </div>
                           <div className="text-sm font-[1000] text-slate-900 tracking-tighter">
-                             Le {item.total.toLocaleString()}
+                             Le {Math.round(item.total).toLocaleString()}
                           </div>
                        </div>
                     ))}
@@ -493,17 +493,17 @@ export default function DashboardPage() {
               <div className="pt-6 border-t border-slate-100 space-y-3">
                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     <span>Transaction Subtotal</span>
-                    <span className="text-slate-900">Le {(selectedSale?.totalAmount / 1.15).toLocaleString()}</span>
+                    <span className="text-slate-900">Le {Math.round(selectedSale?.totalAmount / 1.15).toLocaleString()}</span>
                  </div>
                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     <span>Tax Applied (15%)</span>
-                    <span className="text-slate-900">Le {(selectedSale?.totalAmount - (selectedSale?.totalAmount / 1.15)).toLocaleString()}</span>
+                    <span className="text-slate-900">Le {Math.round(selectedSale?.totalAmount - (selectedSale?.totalAmount / 1.15)).toLocaleString()}</span>
                  </div>
                  <div className="h-px bg-slate-100 w-full my-2" />
                  <div className="flex justify-between items-end pt-2">
                     <div className="space-y-1">
                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Final Settlement</span>
-                       <div className="text-4xl font-[1000] text-slate-900 tracking-tighter">Le {selectedSale?.totalAmount.toLocaleString()}</div>
+                       <div className="text-4xl font-[1000] text-slate-900 tracking-tighter">Le {Math.round(selectedSale?.totalAmount).toLocaleString()}</div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Method</span>

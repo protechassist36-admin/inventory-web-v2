@@ -83,7 +83,7 @@ export default function BillingPage() {
             {invoices.map((invoice) => (
               <TableRow key={invoice.id}>
                 <TableCell className="font-bold text-slate-700">{format(new Date(invoice.createdAt), "PPP")}</TableCell>
-                <TableCell className="font-black text-slate-900">Le {Number(invoice.amount).toLocaleString()}</TableCell>
+                <TableCell className="font-black text-slate-900">Le {Math.round(Number(invoice.amount)).toLocaleString()}</TableCell>
                 <TableCell>
                   <span className={cn(
                     "px-2 py-1 rounded-full text-[10px] font-black uppercase",

@@ -438,7 +438,7 @@ export default function ProductsPage() {
                        </div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-[1000] text-primary text-base">Le {parseFloat(product.unitPrice).toLocaleString()}</TableCell>
+                  <TableCell className="font-[1000] text-primary text-base">Le {Math.round(parseFloat(product.unitPrice)).toLocaleString()}</TableCell>
                   {isPharmacy && (
                     <TableCell>
                       {product.metadata && (product.metadata as any).expiryDate ? (

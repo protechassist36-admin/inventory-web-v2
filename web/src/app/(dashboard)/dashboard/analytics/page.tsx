@@ -311,7 +311,7 @@ export default function AnalyticsPage() {
                              if (active && payload && payload.length) {
                                return (
                                  <div className="bg-slate-900 text-white p-3 rounded-xl shadow-2xl">
-                                   <p className="text-sm font-black">Le {payload[0].value?.toLocaleString()}</p>
+                                   <p className="text-sm font-black">Le {Math.round(Number(payload[0].value) || 0).toLocaleString()}</p>
                                  </div>
                                );
                              }

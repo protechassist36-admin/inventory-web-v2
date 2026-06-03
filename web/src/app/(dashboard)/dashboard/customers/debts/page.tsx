@@ -92,7 +92,7 @@ export default function DebtsPage() {
            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
            <CardContent className="p-6">
               <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total Outstanding</div>
-              <div className="text-3xl font-[1000] tracking-tighter">Le {totalOutstanding.toLocaleString()}</div>
+              <div className="text-3xl font-[1000] tracking-tighter">Le {Math.round(totalOutstanding).toLocaleString()}</div>
               <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase">Receivable from {debts.filter(d => d.status !== 'PAID').length} clients</p>
            </CardContent>
         </Card>
@@ -104,7 +104,7 @@ export default function DebtsPage() {
               </div>
               <div>
                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Settled This Month</div>
-                 <div className="text-2xl font-black text-slate-900">Le {debts.filter(d => d.status === 'PAID').reduce((sum, d) => sum + d.paidAmount, 0).toLocaleString()}</div>
+                 <div className="text-2xl font-black text-slate-900">Le {Math.round(debts.filter(d => d.status === 'PAID').reduce((sum, d) => sum + d.paidAmount, 0)).toLocaleString()}</div>
               </div>
            </CardContent>
         </Card>
@@ -174,8 +174,8 @@ export default function DebtsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-0.5">
-                      <div className="text-sm font-black text-slate-900">Le {(debt.totalAmount - debt.paidAmount).toLocaleString()} <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">Left</span></div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase">Total: Le {debt.totalAmount.toLocaleString()}</div>
+                      <div className="text-sm font-black text-slate-900">Le {Math.round(debt.totalAmount - debt.paidAmount).toLocaleString()} <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">Left</span></div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase">Total: Le {Math.round(debt.totalAmount).toLocaleString()}</div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -230,7 +230,7 @@ export default function DebtsPage() {
           <div className="space-y-6 pt-6">
              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex justify-between items-center">
                 <span className="text-xs font-bold text-slate-500 uppercase">Outstanding Balance</span>
-                <span className="text-xl font-black text-primary">Le {selectedDebt ? (selectedDebt.totalAmount - selectedDebt.paidAmount).toLocaleString() : 0}</span>
+                <span className="text-xl font-black text-primary">Le {selectedDebt ? Math.round(selectedDebt.totalAmount - selectedDebt.paidAmount).toLocaleString() : 0}</span>
              </div>
              <div className="space-y-2">
                 <Label className="font-bold text-slate-700">Payment Amount (Le)</Label>

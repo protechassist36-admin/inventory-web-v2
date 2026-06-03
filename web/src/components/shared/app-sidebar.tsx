@@ -263,7 +263,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   ].filter(group => {
     // Filter items within group
-    group.items = group.items.filter(item => !item.hidden && hasPermission(item.permission));
+    group.items = group.items.filter(item => ((item as any).hidden !== true) && hasPermission(item.permission));
     // Filter group if no items left
     return group.items.length > 0;
   });
