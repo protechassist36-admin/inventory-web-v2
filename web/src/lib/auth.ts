@@ -69,24 +69,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
     async session({ session, token }) {
-      console.log("DEBUG: Session callback - token:", token);
       if (token.sub && session.user) session.user.id = token.sub as string;
       if (token.businessId && session.user) session.user.businessId = token.businessId as string;
-      if (token.role && session.user) {
-        session.user.role = token.role as string;
-        console.log("DEBUG: Session callback - assigned role to session:", session.user.role);
-      } else {
-        console.log("DEBUG: Session callback - role NOT found in token");
-      }
+      if (token.role && session.user) session.user.role = token.role as string;
       return session;
     },
     async jwt({ token, user }) {
+      // 1. Basic population from login
       if (user) {
-        console.log("DEBUG: JWT callback - user provided, assigning:", user);
         token.businessId = (user as any).businessId;
         token.role = (user as any).role;
-      } else {
-        console.log("DEBUG: JWT callback - no user, preserving token:", token);
+      }
+
+      // 2. Database-dependent impersonation logic
+      const cookieStore = await cookies();
+      const impersonationTargetId = cookieStore.get("impersonation_target")?.value;
+
+      if (impersonationTargetId && token.role === "SUPERADMIN") {
+        const targetUser = await prisma.user.findUnique({
+          where: { id: impersonationTargetId },
+          include: { business: true, role: true },
+        });
+
+        if (targetUser) {
+          token.sub = targetUser.id;
+          token.role = targetUser.role.name;
+          token.businessId = targetUser.businessId;
+        }
       }
       return token;
     },
