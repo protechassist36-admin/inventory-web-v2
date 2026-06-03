@@ -539,6 +539,7 @@ export default function POSPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+          </div>
           {/* CART LIST */}
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
             <div className="flex items-center justify-between mb-4 px-1">
@@ -763,7 +764,7 @@ export default function POSPage() {
               </div>
 
               <div className="space-y-4">
-                 {lastSale?.items.map((item: any, i: number) => (
+                 {lastSale?.items?.map((item: any, i: number) => (
                     <div key={i} className="flex justify-between items-start gap-4">
                        <div className="flex-1">
                           <div className="text-xs font-bold text-slate-900 uppercase leading-tight mb-1">{item.name}</div>
@@ -790,7 +791,7 @@ export default function POSPage() {
                  <div className="flex justify-between items-end pt-2">
                     <div className="space-y-1">
                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Total Amount</span>
-                       <div className="text-3xl font-bold text-slate-900">Le {Math.round(lastSale?.totalAmount).toLocaleString()}</div>
+                       <div className="text-3xl font-bold text-slate-900">Le {Math.round(lastSale?.totalAmount || 0).toLocaleString()}</div>
                     </div>
                     <div className="h-10 w-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
                        {lastSale?.paymentMethod === 'CASH' ? <Wallet className="h-5 w-5 text-blue-500" /> : <Smartphone className="h-5 w-5 text-emerald-500" />}
@@ -901,3 +902,4 @@ export default function POSPage() {
     </div>
   );
 }
+

@@ -74,6 +74,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.sub && session.user) session.user.id = token.sub as string;
       if (token.businessId && session.user) session.user.businessId = token.businessId as string;
       if (token.role && session.user) session.user.role = token.role as string;
+      if (token.businessType && session.user) session.user.businessType = token.businessType as string;
+      if (token.trialEndDate && session.user) session.user.trialEndDate = token.trialEndDate as Date;
       return session;
     },
     async jwt({ token, user }) {
@@ -81,6 +83,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.businessId = (user as any).businessId;
         token.role = (user as any).role;
+        token.businessType = (user as any).businessType;
+        token.trialEndDate = (user as any).trialEndDate;
       }
 
       // 2. Database-dependent impersonation logic

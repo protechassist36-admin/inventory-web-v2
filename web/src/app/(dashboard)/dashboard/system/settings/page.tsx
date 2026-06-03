@@ -330,7 +330,7 @@ export default function SettingsPage() {
                                <div>
                                   <div className="font-black text-slate-800 flex items-center gap-2">
                                      {u.name}
-                                     {u.role === "ADMIN" && <Shield className="h-3 w-3 text-primary" />}
+                                     {u.roleName === "ADMIN" && <Shield className="h-3 w-3 text-primary" />}
                                   </div>
                                   <div className="text-xs font-bold text-slate-400 tracking-tight">{u.email}</div>
                                </div>
@@ -338,9 +338,9 @@ export default function SettingsPage() {
                             <div className="flex items-center gap-3">
                                <span className={cn(
                                  "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter",
-                                 u.role === "ADMIN" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"
+                                 u.roleName === "ADMIN" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"
                                )}>
-                                 {u.role}
+                                 {u.roleName}
                                </span>
                                {u.id !== session?.user?.id && (
                                  <Button 
