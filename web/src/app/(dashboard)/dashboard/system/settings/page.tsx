@@ -65,7 +65,7 @@ export default function SettingsPage() {
 
   // Form States
   const [passData, setPassData] = useState({ current: "", new: "", confirm: "" });
-  const [userData, setUserData] = useState({ name: "", email: "", password: "", roleId: "" });
+  const [userData, setUserData] = useState({ name: "", email: "", password: "", roleId: "", selectedPermissions: [] as string[] });
 
   useEffect(() => {
     fetchData();
@@ -110,7 +110,7 @@ export default function SettingsPage() {
     try {
       await createUser(userData);
       toast.success(`User ${userData.name} invited to team`);
-      setUserData({ name: "", email: "", password: "", roleId: roles[0]?.id || "" });
+      setUserData({ name: "", email: "", password: "", roleId: roles[0]?.id || "", selectedPermissions: [] });
       fetchData();
     } catch (error: any) {
       toast.error(error.message);
@@ -279,6 +279,30 @@ export default function SettingsPage() {
                              </SelectContent>
                           </Select>
                        </div>
+
+                       <div className="space-y-2">
+                        <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Granular Permissions</Label>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {permissions.map((p) => (
+                            <div key={p.id} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={p.id} 
+                                checked={userData.selectedPermissions.includes(p.id)}
+                                onCheckedChange={(checked) => {
+                                  setUserData(prev => ({
+                                    ...prev,
+                                    selectedPermissions: checked 
+                                      ? [...prev.selectedPermissions, p.id]
+                                      : prev.selectedPermissions.filter(id => id !== p.id)
+                                  }));
+                                }}
+                              />
+                              <Label htmlFor={p.id} className="text-xs cursor-pointer">{p.key}</Label>
+                            </div>
+                          ))}
+                        </div>
+                       </div>
+
                        <Button type="submit" className="w-full h-12 mt-4 bg-slate-900 rounded-xl font-black text-xs uppercase tracking-widest gap-2 shadow-lg">
                           <UserPlus className="h-4 w-4" /> Grant Access
                        </Button>
