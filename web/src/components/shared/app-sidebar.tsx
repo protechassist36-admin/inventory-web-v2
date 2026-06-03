@@ -28,7 +28,8 @@ import {
   Wallet,
   Calculator,
   UserCheck,
-  Book
+  Book,
+  DollarSign
 } from "lucide-react";
 
 import {

@@ -85,7 +85,8 @@ export async function createProduct(data: any) {
       minStockLevel, 
       status, 
       categoryId, 
-      metadata 
+      metadata,
+      imageUrl
     } = data;
 
     const product = await prisma.product.create({
@@ -102,6 +103,7 @@ export async function createProduct(data: any) {
         categoryId,
         metadata: metadata || {},
         businessId: session.user.businessId,
+        imageUrl
       },
     });
 
@@ -144,7 +146,8 @@ export async function updateProduct(id: string, data: any) {
       minStockLevel, 
       status, 
       categoryId, 
-      metadata 
+      metadata,
+      imageUrl
     } = data;
 
     const product = await prisma.product.update({
@@ -161,6 +164,7 @@ export async function updateProduct(id: string, data: any) {
         status,
         categoryId,
         metadata: metadata || {},
+        imageUrl
       },
     });
 

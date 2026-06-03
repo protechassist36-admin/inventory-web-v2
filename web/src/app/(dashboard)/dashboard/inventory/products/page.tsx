@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImageUploader } from "@/components/ui/image-uploader";
 import { toast } from "sonner";
 import {
   getProducts,
@@ -68,6 +69,7 @@ export default function ProductsPage() {
     batchNumber: "",
     type: "PRODUCT" as "PRODUCT" | "SERVICE",
     isNetworkAvailable: false,
+    imageUrl: "",
   });
 
   // Business Type Logic
@@ -145,6 +147,7 @@ export default function ProductsPage() {
       batchNumber: "",
       type: "PRODUCT",
       isNetworkAvailable: false,
+      imageUrl: "",
     });
   }
 
@@ -175,6 +178,7 @@ export default function ProductsPage() {
       batchNumber: metadata.batchNumber || "",
       type: product.type || "PRODUCT",
       isNetworkAvailable: product.isNetworkAvailable || false,
+      imageUrl: product.imageUrl || "",
     });
     setIsDialogOpen(true);
   }
@@ -240,6 +244,13 @@ export default function ProductsPage() {
                        checked={formData.isNetworkAvailable}
                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, isNetworkAvailable: e.target.checked })}
                        className="h-5 w-5 rounded-lg border-indigo-200 text-indigo-600 focus:ring-indigo-500"
+                     />
+                   </div>
+                   <div className="space-y-2 col-span-2">
+                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Imagery</Label>
+                     <ImageUploader 
+                       value={formData.imageUrl} 
+                       onChange={(url) => setFormData({...formData, imageUrl: url})} 
                      />
                    </div>
                    <div className="space-y-2 col-span-2">

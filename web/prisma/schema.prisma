@@ -177,6 +177,7 @@ model Product {
   metadata           Json?
   businessId         String
   categoryId         String?
+  imageUrl           String?
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   deletedAt          DateTime?
