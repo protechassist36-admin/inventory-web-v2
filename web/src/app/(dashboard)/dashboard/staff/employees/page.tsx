@@ -122,11 +122,14 @@ export default function EmployeesPage() {
     }
   }
 
-  const filteredUsers = users.filter(u => 
-    u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.roleName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = users.filter(u => {
+     if (!u || typeof u !== 'object') return false;
+     return (u.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+            (u.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+            (u.roleName?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+  });
+
+  console.log("DEBUG: filteredUsers before render:", filteredUsers);
 
   return (
     <div className="space-y-8 p-6 md:p-10">

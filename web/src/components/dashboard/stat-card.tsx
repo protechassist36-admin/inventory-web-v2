@@ -16,6 +16,13 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, value, prefix = "", description, icon: Icon, colorClass, bgClass, delay = 0 }: StatCardProps) {
+  // Defensive check for React Error #31
+  let displayValue = value;
+  if (typeof value === 'object' && value !== null) {
+    console.error(`DEBUG: StatCard '${title}' received unexpected object:`, value);
+    displayValue = JSON.stringify(value);
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -39,7 +46,7 @@ export function StatCard({ title, value, prefix = "", description, icon: Icon, c
         <CardContent className="p-0">
           <div className="flex items-baseline gap-1.5">
             <div className="text-4xl font-[1000] text-slate-900 dark:text-white tracking-tighter leading-none">
-              {prefix}<CountUp value={value} />
+              {prefix}<CountUp value={displayValue} />
             </div>
           </div>
           
