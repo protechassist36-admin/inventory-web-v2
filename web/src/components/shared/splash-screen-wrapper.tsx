@@ -4,11 +4,20 @@ import { SplashScreen } from "./splash-screen";
 import { AnimatePresence } from "framer-motion";
 
 export function SplashScreenWrapper({ children }: { children: React.ReactNode }) {
-    const [showSplash, setShowSplash] = useState(true);
+    const [showSplash, setShowSplash] = useState(false);
 
     useEffect(() => {
-        const timer = setTimeout(() => setShowSplash(false), 10000);
-        return () => clearTimeout(timer);
+        const hasShown = sessionStorage.getItem('splash_shown');
+        if (hasShown) {
+            setShowSplash(false);
+        } else {
+            setShowSplash(true);
+            const timer = setTimeout(() => {
+                setShowSplash(false);
+                sessionStorage.setItem('splash_shown', 'true');
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
     }, []);
 
     return (
