@@ -204,7 +204,7 @@ export default function DashboardPage() {
       </motion.div>
       
       {/* KPI Cards */}
-      <div className="grid gap-4 md:gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-5" id="dashboard-stats">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5" id="dashboard-stats">
         <StatCard 
           title="Total Revenue" 
           value={stats.revenue} 

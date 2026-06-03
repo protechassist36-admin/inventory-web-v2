@@ -182,8 +182,8 @@ export default function SalesHistoryPage() {
            </div>
         </CardHeader>
         <CardContent className="p-0">
-           <div className="overflow-x-auto">
-              <Table>
+           <div className="w-full overflow-x-auto">
+              <Table className="min-w-[600px]">
                 <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                   <TableRow className="hover:bg-transparent border-none">
                     <TableHead className="h-14 font-black uppercase text-[10px] tracking-widest text-slate-400 px-8">Invoice ID</TableHead>
