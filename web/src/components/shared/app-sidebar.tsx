@@ -119,7 +119,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isSuperAdmin = userRole === "SUPERADMIN";
   const isAdmin = userRole === "ADMIN" || isSuperAdmin;
 
-  const navGroups = [
+  interface NavItem {
+    title: string;
+    url: string;
+    icon?: any;
+    hidden?: boolean;
+    items?: NavItem[];
+  }
+
+  interface NavGroup {
+    label: string;
+    hidden?: boolean;
+    items: NavItem[];
+  }
+
+  const navGroups: NavGroup[] = [
     {
       label: "Intelligence",
       items: [
