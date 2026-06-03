@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { z } from "zod";
+import { cookies } from "next/headers";
 import { authConfig } from "../auth.config";
 
 declare module "next-auth" {
@@ -28,6 +29,7 @@ declare module "next-auth" {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  trustHost: true,
   providers: [
     CredentialsProvider({
       async authorize(credentials) {
