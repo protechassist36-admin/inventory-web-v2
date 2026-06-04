@@ -40,7 +40,7 @@ export async function createPurchase(data: {
 
       // 2. Update Stock Levels and record Stock Movements
       for (const item of data.items) {
-        await tx.product.update({
+        const product = await tx.product.update({
           where: { id: item.productId, businessId: businessId },
           data: {
             stockQuantity: {
@@ -60,6 +60,17 @@ export async function createPurchase(data: {
             userId: userId,
           },
         });
+
+        // Resolve any critical low stock notifications for this product
+        if (product.stockQuantity > product.minStockLevel) {
+          await tx.$executeRawUnsafe(`
+            UPDATE "Notification" 
+            SET "isRead" = true, "updatedAt" = NOW()
+            WHERE "businessId" = $1 
+            AND "title" = $2
+            AND "isRead" = false
+          `, businessId, `Critical Low Stock: ${product.name}`);
+        }
       }
 
       return newPurchase;

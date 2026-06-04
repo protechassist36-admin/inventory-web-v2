@@ -133,6 +133,30 @@ export default function SalesHistoryPage() {
     { label: "All Sales", value: "ALL_TIME" },
   ];
 
+  const handleExportCSV = () => {
+    const headers = ["Invoice ID", "Date", "Customer", "Total Amount", "Status"];
+    const rows = sales.map(s => [
+      s.invoiceNumber,
+      format(new Date(s.createdAt), "yyyy-MM-dd HH:mm"),
+      s.customerName,
+      Math.round(s.totalAmount),
+      s.paymentStatus
+    ]);
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `sales_history_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-8 p-6 md:p-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -148,10 +172,10 @@ export default function SalesHistoryPage() {
         </div>
 
         <div className="flex gap-3 w-full md:w-auto">
-           <Button variant="outline" className="flex-1 md:flex-none h-12 rounded-xl border-slate-200 gap-2 font-bold uppercase text-[10px] tracking-widest">
+           <Button variant="outline" className="flex-1 md:flex-none h-12 rounded-xl border-slate-200 gap-2 font-bold uppercase text-[10px] tracking-widest" onClick={handleExportCSV}>
               <FileDown className="h-4 w-4" /> Export CSV
            </Button>
-           <Button className={cn("flex-1 md:flex-none h-12 rounded-xl text-white font-black uppercase text-[10px] tracking-widest shadow-xl", colors.primary)}>
+           <Button className={cn("flex-1 md:flex-none h-12 rounded-xl text-white font-black uppercase text-[10px] tracking-widest shadow-xl", colors.primary)} onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-2" /> Print Report
            </Button>
         </div>
@@ -330,7 +354,7 @@ export default function SalesHistoryPage() {
            </div>
 
            <div className="p-8 pt-0 flex gap-4 bg-white relative z-10">
-              <Button variant="outline" className="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-500 hover:bg-slate-50 border-slate-200 transition-all flex gap-2">
+              <Button variant="outline" className="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-500 hover:bg-slate-50 border-slate-200 transition-all flex gap-2" onClick={handlePrint}>
                  <Printer className="h-4 w-4" /> Print Copy
               </Button>
               <Button onClick={() => setIsDetailsOpen(false)} className="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-slate-900 text-white hover:bg-slate-800 shadow-xl transition-all">

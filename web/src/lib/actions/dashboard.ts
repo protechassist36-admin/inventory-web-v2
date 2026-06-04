@@ -16,6 +16,7 @@ export async function getDashboardStats() {
 
     const [
       revenueData,
+      debtPaymentData,
       ordersCount,
       skuCount,
       lowStockCount,
@@ -31,6 +32,15 @@ export async function getDashboardStats() {
         },
         _sum: {
           totalAmount: true
+        }
+      }),
+      // Total Debt Payments
+      prisma.debtPayment.aggregate({
+        where: { 
+          businessId
+        },
+        _sum: {
+          amount: true
         }
       }),
       // Total Paid Orders
@@ -76,7 +86,7 @@ export async function getDashboardStats() {
     ]);
 
     return {
-      revenue: Number(revenueData._sum.totalAmount || 0),
+      revenue: Number(revenueData._sum.totalAmount || 0) + Number(debtPaymentData._sum.amount || 0),
       orders: ordersCount,
       skuCount: skuCount,
       lowStock: lowStockCount[0]?.count || 0,
