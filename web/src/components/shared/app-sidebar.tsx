@@ -147,9 +147,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       label: "Intelligence",
       items: [
         { title: "Overview", url: "/dashboard", icon: LayoutDashboard, permission: "menu:overview" },
-        { title: "Intelligence Hub", url: "/dashboard/registry", icon: ShieldCheck, permission: "menu:intelligence_hub" },
-        { title: "Analytics", url: "/dashboard/analytics", icon: ActivityIcon, permission: "menu:analytics" },
-        { title: "Reports", url: "/dashboard/reports", icon: BarChart3, permission: "menu:reports" },
+        { title: "Intelligence Hub", url: "/dashboard/registry", icon: ShieldCheck, permission: "menu:intelligence:hub" },
+        { title: "Analytics", url: "/dashboard/analytics", icon: ActivityIcon, permission: "menu:intelligence:analytics" },
+        { title: "Reports", url: "/dashboard/reports", icon: BarChart3, permission: "menu:intelligence:reports" },
       ]
     },
     {
@@ -226,7 +226,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             { title: "Cash Flow", url: "/dashboard/accounting/cashflow" },
           ],
         },
-        { title: "Billing", url: "/dashboard/billing", icon: CreditCard, permission: "menu:billing" },
+        { title: "Billing", url: "/dashboard/billing", icon: CreditCard, permission: "menu:accounting:billing" },
       ]
     },
     {
@@ -259,8 +259,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       label: "Support",
       items: [
-        { title: "System Manual", url: "/dashboard/manual", icon: Book, permission: "menu:manual" },
-        { title: "Pricing Plans", url: "/pricing", icon: DollarSign, permission: "menu:system" },
+        { title: "System Manual", url: "/dashboard/manual", icon: Book, permission: "menu:support:manual" },
+        { title: "Pricing Plans", url: "/pricing", icon: DollarSign, permission: "menu:support:pricing" },
       ]
     }
   ].filter(group => {

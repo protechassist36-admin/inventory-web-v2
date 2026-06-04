@@ -16,6 +16,7 @@ import {
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { Bell } from "lucide-react";
 import { NotificationBell } from "@/components/shared/notification-bell";
+import { ToastManager } from "@/components/shared/toast-manager";
 import { LogoutButton } from "@/components/shared/logout-button";
 import { TrialBanner } from "@/components/shared/trial-banner";
 import { RealTimeClock } from "@/components/shared/real-time-clock";
@@ -81,6 +82,7 @@ export default async function DashboardLayout({
 
   return (
       <SidebarProvider>
+        <ToastManager />
         <AppSidebar />
         <SidebarInset>
           <OnboardingTrigger />

@@ -27,21 +27,16 @@ import { useSession } from "next-auth/react";
 import { cn, getIndustryColor } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { getRecentSales } from "@/lib/actions/sale";
-import { getProducts } from "@/lib/actions/product";
-import { getExpiringBatches } from "@/lib/actions/stock";
-import { getUsers } from "@/lib/actions/user";
+import { getDashboardStats } from "@/lib/actions/dashboard";
 import { useRouter } from "next/navigation";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { TrendChart } from "@/components/dashboard/trend-chart";
-import { addDays, format, subDays, isToday } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
+import { format, subDays } from "date-fns";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 
 export default function DashboardPage() {
@@ -81,34 +76,13 @@ export default function DashboardPage() {
   async function fetchDashboardData() {
     try {
       setLoading(true);
-      const [sales, products, batches, users] = await Promise.all([
+      const [sales, dashboardStats] = await Promise.all([
         getRecentSales(),
-        getProducts(),
-        getExpiringBatches(),
-        getUsers()
+        getDashboardStats()
       ]);
 
-      const totalRevenue = sales
-        .filter((s: any) => s.paymentStatus === 'PAID')
-        .reduce((sum: number, s: any) => sum + s.totalAmount, 0);
-      const lowStockCount = products.filter((p: any) => p.stockQuantity <= p.minStockLevel).length;
-      
-      const warningThreshold = addDays(new Date(), 30);
-      const expiringCount = batches.filter((b: any) => b.expiryDate && new Date(b.expiryDate) < warningThreshold).length;
-
-      const todaysSales = sales.filter(s => isToday(new Date(s.createdAt)));
-
-      const paidSales = sales.filter((s: any) => s.paymentStatus === 'PAID');
-      setRecentSales(paidSales);
-      setStats({
-        revenue: totalRevenue,
-        orders: paidSales.length,
-        skuCount: products.length,
-        lowStock: lowStockCount,
-        expiringItems: expiringCount,
-        activeTransactions: todaysSales.length,
-        staffCount: users.length
-      });
+      setRecentSales(sales);
+      setStats(dashboardStats);
     } catch (error) {
       console.error(error);
     } finally {
@@ -118,11 +92,15 @@ export default function DashboardPage() {
   
   const getGreeting = () => {
     const hour = new Date().getHours();
-    const name = session?.user?.name?.split(' ')[0] || "Partner";
+    const role = session?.user?.role?.toLowerCase() || "User";
+    const name = session?.user?.name || "Partner";
     
-    if (hour < 12) return `Good Morning, ${name}`;
-    if (hour < 17) return `Good Afternoon, ${name}`;
-    return `Good Evening, ${name}`;
+    let timeGreeting = "Hello";
+    if (hour < 12) timeGreeting = "Good Morning";
+    else if (hour < 17) timeGreeting = "Good Afternoon";
+    else timeGreeting = "Good Evening";
+
+    return `${timeGreeting}, ${role} ${name}`;
   };
 
   const getContextInfo = () => {

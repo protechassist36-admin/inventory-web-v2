@@ -303,40 +303,94 @@ export default function SettingsPage() {
                            <ShieldAlert className="h-3.5 w-3.5 text-indigo-600" /> Granular Access Control
                         </Label>
                         
-                        <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar border border-slate-100 rounded-2xl p-4 bg-slate-50/30">
+                        <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar border border-slate-100 rounded-2xl p-4 bg-slate-50/30">
                           {/* Grouped Permissions */}
-                          {["menu", "sales", "product", "inventory", "purchases", "customers", "accounting", "staff", "reports", "system", "support"].map((group) => {
-                             const groupPermissions = permissions.filter(p => p.key.startsWith(group));
+                          {[
+                            { label: "Intelligence Hub", prefix: "menu:intelligence", extraKeys: ["menu:overview"] },
+                            { label: "Inventory", prefix: "menu:inventory" },
+                            { label: "Purchases", prefix: "menu:purchases" },
+                            { label: "Commerce (Sales)", prefix: "menu:sales" },
+                            { label: "Relationships (Customers)", prefix: "menu:customers" },
+                            { label: "Finance (Accounting)", prefix: "menu:accounting" },
+                            { label: "Administrative (Team / HR)", prefix: "menu:staff" },
+                            { label: "System", prefix: "menu:system" },
+                            { label: "Support", prefix: "menu:support" }
+                          ].map((group) => {
+                             const groupPermissions = permissions.filter(p => 
+                               p.key === group.prefix || 
+                               p.key.startsWith(group.prefix + ":") ||
+                               (group.extraKeys && group.extraKeys.includes(p.key))
+                             );
                              if (groupPermissions.length === 0) return null;
                              
-                             const groupLabel = group === "menu" ? "Navigation & Modules" : group + " Management";
-                             
                              return (
-                               <div key={group} className="space-y-3">
-                                  <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 pb-1">{groupLabel}</div>
+                               <div key={group.label} className="space-y-3">
+                                  <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 pb-1">{group.label}</div>
                                   <div className="grid grid-cols-1 gap-2">
-                                    {groupPermissions.map((p) => (
-                                      <div key={p.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all group">
-                                        <Checkbox 
-                                          id={p.id} 
-                                          checked={userData.selectedPermissions.includes(p.id)}
-                                          onCheckedChange={(checked) => {
-                                            setUserData(prev => ({
-                                              ...prev,
-                                              selectedPermissions: checked 
-                                                ? [...prev.selectedPermissions, p.id]
-                                                : prev.selectedPermissions.filter(id => id !== p.id)
-                                            }));
-                                          }}
-                                          className="data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                                        />
-                                        <Label htmlFor={p.id} className="text-[11px] font-bold text-slate-600 cursor-pointer group-hover:text-slate-900 transition-colors">
-                                          {group === "menu" 
-                                            ? "Access " + p.key.split(":").slice(1).join(" ").replace("_", " ") + " Module"
-                                            : p.key.split(":").slice(1).join(" ").replace("_", " ")}
-                                        </Label>
-                                      </div>
-                                    ))}
+                                    {groupPermissions.map((p) => {
+                                      let label = p.key.split(":").pop()?.replace(/_/g, " ") || p.key;
+                                      
+                                      // Exact Requested Label Mappings
+                                      const labelOverrides: Record<string, string> = {
+                                        "menu:overview": "Overview",
+                                        "menu:intelligence:hub": "Intelligence Hub",
+                                        "menu:intelligence:analytics": "Analytics",
+                                        "menu:intelligence:reports": "Reports",
+                                        "menu:intelligence:supply_chain": "Supply Chain",
+                                        "menu:inventory:products": "Products",
+                                        "menu:inventory:network": "Network Exchange",
+                                        "menu:inventory:categories": "Categories",
+                                        "menu:inventory:batches": "Batches",
+                                        "menu:inventory:history": "Stock History",
+                                        "menu:inventory:expiry": "Expiry Tracking",
+                                        "menu:purchases:suppliers": "Suppliers",
+                                        "menu:purchases:orders": "Purchase Orders",
+                                        "menu:purchases:returns": "Returns",
+                                        "menu:sales:pos": "Launch POS",
+                                        "menu:sales:history": "Sales History",
+                                        "menu:sales:orders": "Sales Orders",
+                                        "menu:sales:credit": "Credit Sales",
+                                        "menu:sales:returns": "Returns",
+                                        "menu:customers:registry": "Customer Registry",
+                                        "menu:customers:loyalty": "Loyalty Program",
+                                        "menu:customers:profiles": "Purchase Profiles",
+                                        "menu:accounting:expenses": "Expenses",
+                                        "menu:accounting:pl": "Profit & Loss",
+                                        "menu:accounting:cashflow": "Cash Flow",
+                                        "menu:accounting:billing": "Billing",
+                                        "menu:staff:employees": "Employees",
+                                        "menu:staff:attendance": "Attendance",
+                                        "menu:staff:payroll": "Payroll",
+                                        "menu:system:logs": "Audit Logs",
+                                        "menu:system:notifications": "Notifications",
+                                        "menu:system:settings": "Settings",
+                                        "menu:support:manual": "System Manual",
+                                        "menu:support:pricing": "Pricing Plans"
+                                      };
+                                      
+                                      if (labelOverrides[p.key]) label = labelOverrides[p.key];
+                                      
+                                      return (
+                                        <div key={p.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all group">
+                                          <Checkbox 
+                                            id={p.id} 
+                                            checked={userData.selectedPermissions.includes(p.id)}
+                                            onCheckedChange={(checked) => {
+                                              setUserData(prev => ({
+                                                ...prev,
+                                                selectedPermissions: checked 
+                                                  ? [...prev.selectedPermissions, p.id]
+                                                  : prev.selectedPermissions.filter(id => id !== p.id)
+                                              }));
+                                            }}
+                                            className="data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                                          />
+                                          <Label htmlFor={p.id} className="text-[11px] font-bold text-slate-600 cursor-pointer group-hover:text-slate-900 transition-colors capitalize">
+                                            {label}
+                                          </Label>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                </div>
                              );

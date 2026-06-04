@@ -35,8 +35,10 @@ model Business {
   notifications       Notification[]
   products            Product[]
   purchases           Purchase[]
+  purchaseItems       PurchaseItem[]
   restaurantTables    RestaurantTable[]
   sales               Sale[]
+  saleItems           SaleItem[]
   stockMovements      StockMovement[]
   subscriptions       Subscription[]
   batches             Batch[] // Added opposite relation
@@ -50,6 +52,7 @@ model Business {
   payrolls            Payroll[]
   loyaltyTiers        LoyaltyTier[]
   loyaltyCampaigns    LoyaltyCampaign[]
+  orderStatusHistory  OrderStatusHistory[]
   
   flutterwaveRef      String?
   subscriptionStatus  String    @default("INACTIVE")
@@ -280,17 +283,20 @@ model Sale {
 }
 
 model OrderStatusHistory {
-  id        String   @id @default(cuid())
-  saleId    String
-  status    String
-  note      String?
-  userId    String
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  saleId     String
+  status     String
+  note       String?
+  userId     String
+  businessId String?
+  createdAt  DateTime @default(now())
 
-  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  sale     Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([saleId])
+  @@index([businessId])
 }
 
 model SaleItem {
@@ -305,8 +311,12 @@ model SaleItem {
   externalSourceName String?
   externalCostPrice  Decimal? @db.Decimal(10, 2)
   status             String   @default("pending")
+  businessId         String?
   product            Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   sale               Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  business           Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
 }
 
 model Supplier {
@@ -353,8 +363,12 @@ model PurchaseItem {
   quantity   Int
   unitCost   Decimal  @db.Decimal(10, 2)
   total      Decimal  @db.Decimal(10, 2)
+  businessId String?
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
 }
 
 model StockMovement {

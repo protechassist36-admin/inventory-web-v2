@@ -23,27 +23,33 @@ export const getTenantPrisma = (businessId: string) => {
   return prismaClient.$extends({
     query: {
       $allModels: {
-        async findMany({ args, query }) {
+        async findMany({ model, args, query }) {
+          if (model === 'Business' || model === 'Permission') return query(args);
           args.where = { ...args.where, businessId };
           return query(args);
         },
-        async findUnique({ args, query }) {
+        async findUnique({ model, args, query }) {
+          if (model === 'Business' || model === 'Permission') return query(args);
           args.where = { ...args.where, businessId };
           return query(args);
         },
-        async findFirst({ args, query }) {
+        async findFirst({ model, args, query }) {
+          if (model === 'Business' || model === 'Permission') return query(args);
           args.where = { ...args.where, businessId };
           return query(args);
         },
-        async update({ args, query }) {
+        async update({ model, args, query }) {
+          if (model === 'Business' || model === 'Permission') return query(args);
           args.where = { ...args.where, businessId };
           return query(args);
         },
-        async delete({ args, query }) {
+        async delete({ model, args, query }) {
+          if (model === 'Business' || model === 'Permission') return query(args);
           args.where = { ...args.where, businessId };
           return query(args);
         },
-        async count({ args, query }) {
+        async count({ model, args, query }) {
+          if (model === 'Business' || model === 'Permission') return query(args);
           args.where = { ...args.where, businessId };
           return query(args);
         },

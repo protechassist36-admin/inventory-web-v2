@@ -31,13 +31,12 @@ export async function registerBusiness(data: any) {
       },
     });
 
-    // 2. Create Default ADMIN role for the business
-    const adminRole = await tx.role.create({
-      data: {
-        name: 'ADMIN',
-        businessId: business.id,
-      },
-    });
+    // 2. Create Default roles for the business
+    const [adminRole, managerRole, employeeRole] = await Promise.all([
+      tx.role.create({ data: { name: 'ADMIN', businessId: business.id } }),
+      tx.role.create({ data: { name: 'MANAGER', businessId: business.id } }),
+      tx.role.create({ data: { name: 'EMPLOYEE', businessId: business.id } }),
+    ]);
 
     // 3. Create Admin User with verification token
     const user = await tx.user.create({

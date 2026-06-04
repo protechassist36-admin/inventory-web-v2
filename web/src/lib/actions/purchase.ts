@@ -32,6 +32,7 @@ export async function createPurchase(data: {
               quantity: item.quantity,
               unitCost: item.unitCost,
               total: item.total,
+              businessId: businessId,
             })),
           },
         },

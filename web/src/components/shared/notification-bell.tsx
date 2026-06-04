@@ -9,9 +9,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { getNotifications, markAsRead } from "@/lib/actions/notification";
+import { getNotifications, markAsRead, markAllAsRead } from "@/lib/actions/notification";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -36,6 +37,16 @@ export function NotificationBell() {
     try {
       await markAsRead(id);
       fetchNotifications();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function handleClearAll() {
+    try {
+      await markAllAsRead();
+      fetchNotifications();
+      toast.success("All alerts cleared");
     } catch (error) {
       console.error(error);
     }
@@ -92,7 +103,13 @@ export function NotificationBell() {
            )}
         </div>
         <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
-           <Button variant="ghost" className="h-7 text-[10px] font-black uppercase text-slate-400 tracking-widest">Clear All History</Button>
+           <Button 
+             variant="ghost" 
+             className="h-7 text-[10px] font-black uppercase text-slate-400 tracking-widest"
+             onClick={handleClearAll}
+           >
+             Clear All History
+           </Button>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

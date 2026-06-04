@@ -13,6 +13,7 @@ export default function ProfitLossPage() {
   const [data, setData] = useState<any>(null);
   const [productData, setProductData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const end = new Date();
@@ -28,11 +29,13 @@ export default function ProfitLossPage() {
       setLoading(false);
     }).catch(err => {
       console.error("DEBUG: P&L Fetch Error:", err);
+      setError("Failed to load financial data. Please ensure you have recorded sales and expenses.");
       setLoading(false);
     });
   }, []);
 
   if (loading) return <div className="flex justify-center p-20"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>;
+  if (error || !data) return <div className="p-20 text-center font-bold text-rose-500 bg-rose-50/50 rounded-3xl m-10 border border-rose-100">{error || "No data available"}</div>;
 
   const cards = [
     { title: "Total Revenue", value: data.totalRevenue, icon: TrendingUp, color: "text-emerald-600" },

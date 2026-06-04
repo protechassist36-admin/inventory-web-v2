@@ -53,13 +53,15 @@ export async function createSale(data: {
               isExternalSourced: item.isExternalSourced || false,
               externalSourceName: item.externalSourceName || null,
               externalCostPrice: item.externalCostPrice || null,
+              businessId: businessId,
             })),
           },
           statusHistory: {
             create: {
               status: "PENDING",
               note: "Order created",
-              userId: userId
+              userId: userId,
+              businessId: businessId,
             }
           }
         },
@@ -342,7 +344,8 @@ export async function updateSaleStatus(saleId: string, status: string, note?: st
           create: {
             status: status.toUpperCase(),
             note: note || `Status updated to ${status}`,
-            userId: userId
+            userId: userId,
+            businessId: businessId
           }
         }
       }
