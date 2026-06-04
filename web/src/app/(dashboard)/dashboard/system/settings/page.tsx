@@ -305,7 +305,7 @@ export default function SettingsPage() {
                         
                         <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar border border-slate-100 rounded-2xl p-4 bg-slate-50/30">
                           {/* Grouped Permissions */}
-                          {["menu", "sales", "product", "inventory", "staff", "reports", "accounting", "system"].map((group) => {
+                          {["menu", "sales", "product", "inventory", "purchases", "customers", "accounting", "staff", "reports", "system", "support"].map((group) => {
                              const groupPermissions = permissions.filter(p => p.key.startsWith(group));
                              if (groupPermissions.length === 0) return null;
                              
@@ -332,8 +332,8 @@ export default function SettingsPage() {
                                         />
                                         <Label htmlFor={p.id} className="text-[11px] font-bold text-slate-600 cursor-pointer group-hover:text-slate-900 transition-colors">
                                           {group === "menu" 
-                                            ? "Access " + p.key.split(":")[1].replace("_", " ") + " Module"
-                                            : p.key.split(":")[1].replace("_", " ")}
+                                            ? "Access " + p.key.split(":").slice(1).join(" ").replace("_", " ") + " Module"
+                                            : p.key.split(":").slice(1).join(" ").replace("_", " ")}
                                         </Label>
                                       </div>
                                     ))}
