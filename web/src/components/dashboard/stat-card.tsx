@@ -3,6 +3,7 @@ import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { CountUp } from "@/components/shared/count-up";
+import Link from "next/link";
 
 interface StatCardProps {
   title: string;
@@ -13,9 +14,10 @@ interface StatCardProps {
   colorClass: string;
   bgClass: string;
   delay?: number;
+  href?: string;
 }
 
-export function StatCard({ title, value, prefix = "", description, icon: Icon, colorClass, bgClass, delay = 0 }: StatCardProps) {
+export function StatCard({ title, value, prefix = "", description, icon: Icon, colorClass, bgClass, delay = 0, href }: StatCardProps) {
   // Defensive check for React Error #31
   let displayValue: any = value;
   if (typeof value === 'object' && value !== null) {
@@ -23,13 +25,11 @@ export function StatCard({ title, value, prefix = "", description, icon: Icon, c
     displayValue = JSON.stringify(value);
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <Card className="group relative overflow-hidden border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2.5rem] p-7 shadow-sm transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1.5 active:scale-[0.98]">
+  const CardContentWrapper = (
+    <Card className={cn(
+        "group relative overflow-hidden border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2.5rem] p-7 shadow-sm transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1.5 active:scale-[0.98]",
+        href && "cursor-pointer"
+    )}>
         {/* Animated Glow Backdrop */}
         <div className={cn("absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-[0.08] dark:opacity-[0.05] blur-3xl transition-all duration-700 group-hover:scale-150 group-hover:opacity-20", bgClass)} />
         
@@ -66,7 +66,15 @@ export function StatCard({ title, value, prefix = "", description, icon: Icon, c
           </div>
         </CardContent>
       </Card>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {href ? <Link href={href}>{CardContentWrapper}</Link> : CardContentWrapper}
     </motion.div>
   );
 }
-

@@ -88,7 +88,9 @@ export default function DashboardPage() {
         getUsers()
       ]);
 
-      const totalRevenue = sales.reduce((sum: number, s: any) => sum + s.totalAmount, 0);
+      const totalRevenue = sales
+        .filter((s: any) => s.paymentStatus === 'PAID')
+        .reduce((sum: number, s: any) => sum + s.totalAmount, 0);
       const lowStockCount = products.filter((p: any) => p.stockQuantity <= p.minStockLevel).length;
       
       const warningThreshold = addDays(new Date(), 30);
@@ -214,6 +216,7 @@ export default function DashboardPage() {
           colorClass="text-emerald-600"
           bgClass="bg-emerald-50 dark:bg-emerald-950/30"
           delay={0.1}
+          href="/dashboard/sales/history"
         />
         <StatCard 
           title="Today's Orders" 
@@ -223,6 +226,7 @@ export default function DashboardPage() {
           colorClass="text-blue-600"
           bgClass="bg-blue-50 dark:bg-blue-950/30"
           delay={0.2}
+          href="/dashboard/sales/orders"
         />
         <StatCard 
           title={businessType === "PHARMACY" ? "Drug Items" : "SKU Count"} 
@@ -232,6 +236,7 @@ export default function DashboardPage() {
           colorClass="text-purple-600"
           bgClass="bg-purple-50 dark:bg-purple-950/30"
           delay={0.3}
+          href="/dashboard/inventory/products"
         />
         <StatCard 
           title="Low Stock" 
@@ -241,6 +246,7 @@ export default function DashboardPage() {
           colorClass="text-rose-600"
           bgClass="bg-rose-50 dark:bg-rose-950/30"
           delay={0.4}
+          href="/dashboard/inventory/products"
         />
         {businessType === "PHARMACY" && (
           <StatCard 
@@ -251,6 +257,7 @@ export default function DashboardPage() {
             colorClass="text-amber-600"
             bgClass="bg-amber-50 dark:bg-amber-950/30"
             delay={0.5}
+            href="/dashboard/inventory/expiry"
           />
         )}
       </div>

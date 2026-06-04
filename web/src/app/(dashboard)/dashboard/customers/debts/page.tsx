@@ -33,6 +33,7 @@ export default function DebtsPage() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedDebt, setSelectedDebt] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState(0);
+  const [paymentNote, setPaymentNote] = useState("");
 
   useEffect(() => {
     fetchDebts();
@@ -64,11 +65,12 @@ export default function DebtsPage() {
     }
 
     try {
-      const result = await createDebtPayment(selectedDebt.id, paymentAmount);
+      const result = await createDebtPayment(selectedDebt.id, paymentAmount, "CASH", paymentNote);
       if (result.success) {
         toast.success("Payment recorded successfully.");
         setIsPaymentDialogOpen(false);
         setPaymentAmount(0);
+        setPaymentNote("");
         setSelectedDebt(null);
         fetchDebts();
       }
@@ -243,6 +245,16 @@ export default function DebtsPage() {
                      className="h-12 pl-10 rounded-xl border-slate-100 bg-slate-50"
                    />
                 </div>
+             </div>
+             <div className="space-y-2">
+                <Label className="font-bold text-slate-700">Payment Note</Label>
+                <Input 
+                   type="text"
+                   value={paymentNote}
+                   placeholder="e.g. Paid via bank transfer"
+                   onChange={(e) => setPaymentNote(e.target.value)}
+                   className="h-12 rounded-xl border-slate-100 bg-slate-50"
+                />
              </div>
              <div className="flex justify-end gap-3 pt-6 border-t border-slate-50">
                 <Button variant="ghost" className="font-bold text-slate-400" onClick={() => setIsPaymentDialogOpen(false)}>Cancel</Button>

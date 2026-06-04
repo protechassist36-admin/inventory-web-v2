@@ -217,6 +217,18 @@ export default function POSPage() {
         amountPaid: paymentStatus === "PAID" ? grandTotal : amountPaid,
       };
 
+      // Final stock check
+      for (const item of cart) {
+        if (!item.isExternal) {
+          const p = products?.find(prod => prod.id === item.id);
+          if (!p || p.stockQuantity < item.quantity) {
+             toast.error(`Insufficient stock for ${item.name}!`);
+             setLoading(false);
+             return;
+          }
+        }
+      }
+
       console.log("DEBUG: Sale Data Prepared:", saleData);
 
       const currentCart = [...cart];
@@ -463,11 +475,18 @@ export default function POSPage() {
                       className="group"
                     >
                       <div 
-                        className="cursor-pointer bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-blue-400 transition-all h-full flex flex-col p-1.5 sm:p-3 shadow-sm relative overflow-hidden" 
-                        onClick={() => addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1 })}
+                      className="cursor-pointer bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-blue-400 transition-all h-full flex flex-col p-1.5 sm:p-3 shadow-sm relative overflow-hidden" 
+                      onClick={() => {
+                        if (p.stockQuantity <= 0) {
+                          toast.error("Product is out of stock!");
+                          return;
+                        }
+                        addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1 });
+                      }}
                       >
                         <div className="aspect-square bg-slate-50 rounded-md sm:rounded-lg mb-1.5 sm:mb-2 flex items-center justify-center relative overflow-hidden">
                           <Package className="h-5 w-5 sm:h-8 sm:w-8 text-slate-200 group-hover:text-blue-200 transition-colors" />
+                          <div className="absolute top-1 left-1 bg-slate-900 text-white text-[7px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">Stock: {p.stockQuantity}</div>
                           {p.stockQuantity <= 5 && (
                              <div className="absolute top-1 right-1 bg-rose-500 text-white text-[7px] sm:text-[8px] font-bold px-1 py-0.5 rounded uppercase">Low</div>
                            )}

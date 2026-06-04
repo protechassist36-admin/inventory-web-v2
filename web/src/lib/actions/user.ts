@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcrypt";
 import { generateVerificationToken, sendVerificationEmail } from "@/lib/mail";
 import { canPerformAction } from "@/lib/subscriptions";
+import { logAudit } from "./audit";
 
 export async function getUsers() {
   try {
@@ -69,7 +70,14 @@ export async function createUser(data: { name: string; email: string; password: 
     // 1. Check Plan Limits
     const business = await globalPrisma.business.findUnique({
       where: { id: businessId },
-      select: { plan: true, _count: { select: { users: true } } }
+      select: { 
+        plan: true, 
+        _count: { 
+          select: { 
+            users: { where: { deletedAt: null } } 
+          } 
+        } 
+      }
     });
 
     const userCount = business?._count.users || 0;
@@ -103,6 +111,13 @@ export async function createUser(data: { name: string; email: string; password: 
         businessId: businessId,
         verificationToken,
       },
+    });
+
+    await logAudit({
+      action: "CREATE",
+      entity: "USER",
+      entityId: user.id,
+      newData: { name: user.name, email: user.email, roleId: user.roleId }
     });
 
     await sendVerificationEmail(data.email, verificationToken);
@@ -162,6 +177,13 @@ export async function updateUser(id: string, data: any) {
       data,
     });
 
+    await logAudit({
+      action: "UPDATE",
+      entity: "USER",
+      entityId: user.id,
+      newData: data
+    });
+
     revalidatePath("/dashboard/settings");
     return {
       ...user,
@@ -191,6 +213,12 @@ export async function deleteUser(id: string) {
 
     await prisma.user.delete({
       where: { id, businessId: session.user.businessId },
+    });
+
+    await logAudit({
+      action: "DELETE",
+      entity: "USER",
+      entityId: id,
     });
 
     revalidatePath("/dashboard/settings");

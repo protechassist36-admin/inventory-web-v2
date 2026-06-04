@@ -16,6 +16,7 @@ export async function getSalesOrderSummary(start: Date, end: Date) {
           gte: start,
           lte: end,
         },
+        paymentStatus: 'PAID', // Filter PAID only
       },
       select: {
         totalAmount: true,

@@ -50,6 +50,10 @@ export async function getProducts() {
   }
 }
 
+import { logAudit } from "./audit";
+
+// ... (imports)
+
 export async function createProduct(data: any) {
   try {
     const session = await auth();
@@ -105,6 +109,13 @@ export async function createProduct(data: any) {
         businessId: session.user.businessId,
         imageUrl
       },
+    });
+
+    await logAudit({
+      action: "CREATE",
+      entity: "PRODUCT",
+      entityId: product.id,
+      newData: product
     });
 
     if (product.stockQuantity <= product.minStockLevel) {
@@ -168,6 +179,13 @@ export async function updateProduct(id: string, data: any) {
       },
     });
 
+    await logAudit({
+      action: "UPDATE",
+      entity: "PRODUCT",
+      entityId: product.id,
+      newData: product
+    });
+
     if (product.stockQuantity <= product.minStockLevel) {
        await createNotification({
           title: "Low Stock Alert",
@@ -198,6 +216,12 @@ export async function deleteProduct(id: string) {
 
     await prisma.product.delete({
       where: { id, businessId: session.user.businessId },
+    });
+
+    await logAudit({
+      action: "DELETE",
+      entity: "PRODUCT",
+      entityId: id,
     });
 
     revalidatePath("/dashboard/inventory/products");

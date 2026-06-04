@@ -70,10 +70,11 @@ export default function ReportsPage() {
   }
 
   // Analytics Logic
-  const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
+  const paidSales = sales.filter((s: any) => s.paymentStatus === 'PAID');
+  const totalRevenue = paidSales.reduce((sum, s) => sum + s.totalAmount, 0);
   
   // Calculate COGS and Profit
-  const analytics = sales.reduce((acc, sale) => {
+  const analytics = paidSales.reduce((acc, sale) => {
     sale.items.forEach((item: any) => {
       const product = products.find(p => p.id === item.productId);
       const cost = product?.costPrice || 0;

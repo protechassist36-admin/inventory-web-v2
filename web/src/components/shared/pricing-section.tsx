@@ -1,10 +1,11 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import { Check, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { ManualPaymentModal } from './manual-payment-modal';
 
 const plans = [
   {
@@ -43,6 +44,8 @@ const plans = [
 
 export function PricingSection() {
   const router = useRouter();
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+
   return (
     <div className="py-24 px-6 bg-slate-50 dark:bg-slate-950" id="pricing">
       <div className="max-w-7xl mx-auto">
@@ -50,7 +53,7 @@ export function PricingSection() {
         <div className="mb-16 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-bold text-sm">
             <Star className="h-4 w-4 fill-current" />
-            <span>14-Day Free Trial available on all plans</span>
+            <span>7-Day Free Trial available on all plans</span>
           </div>
           <h2 className="text-4xl lg:text-6xl font-black tracking-tighter text-slate-900 dark:text-white mt-8 mb-6">Choose your growth plan</h2>
           <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">Transparent pricing for premium enterprise retail intelligence.</p>
@@ -88,7 +91,10 @@ export function PricingSection() {
               </CardContent>
               <CardFooter>
                 <Button 
-                  onClick={() => router.push(plan.name === 'Enterprise' ? 'mailto:protechassist36@gmail.com' : '/register')}
+                  onClick={() => {
+                    if (plan.name === 'Basic') return router.push('/register');
+                    setSelectedPlan(plan.name);
+                  }}
                   className={cn("w-full h-12 font-bold", plan.popular ? "bg-indigo-600 hover:bg-indigo-700" : "bg-slate-900 dark:bg-white dark:text-slate-900")}
                 >
                   {plan.cta}
@@ -97,6 +103,12 @@ export function PricingSection() {
             </Card>
           ))}
         </div>
+
+        <ManualPaymentModal 
+           isOpen={!!selectedPlan} 
+           onClose={() => setSelectedPlan(null)} 
+           planName={selectedPlan || ""} 
+        />
 
         {/* Contact Info */}
         <div className="mt-20 text-center text-slate-600 dark:text-slate-400">

@@ -9,86 +9,58 @@ export async function getRegistryIntelligence() {
 
   const businessId = session.user.businessId;
 
-  const [customers, suppliers] = await Promise.all([
+  const [customers] = await Promise.all([
     prisma.customer.findMany({
       where: { businessId, deletedAt: null },
       include: {
         sales: {
-          select: {
-            totalAmount: true,
-            status: true,
-            createdAt: true,
-          }
+          include: {
+            items: { include: { product: { include: { category: true } } } }
+          },
+          orderBy: { createdAt: "desc" }
         },
-        debts: {
-          select: {
-            totalAmount: true,
-            paidAmount: true,
-          }
-        }
       }
     }),
-    prisma.supplier.findMany({
-      where: { businessId, deletedAt: null },
-      include: {
-        purchases: {
-          select: {
-            totalAmount: true,
-            status: true,
-            createdAt: true,
-          }
-        }
-      }
-    })
   ]);
 
-  const registryNodes = [
-    ...customers.map(c => {
-      const totalVolume = c.sales.reduce((sum, s) => sum + Number(s.totalAmount), 0);
-      const debtAmount = c.debts.reduce((sum, d) => sum + (Number(d.totalAmount) - Number(d.paidAmount)), 0);
-      const lastInteraction = c.sales.length > 0 ? c.sales[0].createdAt : c.createdAt;
-      
-      // Basic Reliability Score logic
-      const reliability = debtAmount > 0 ? Math.max(0, 100 - (debtAmount / (totalVolume || 1)) * 100) : 100;
+  const now = new Date();
+  
+  const registryNodes = customers.map(c => {
+    const totalVolume = c.sales.reduce((sum, s) => sum + Number(s.totalAmount), 0);
+    const lastInteraction = c.sales.length > 0 ? c.sales[0].createdAt : c.createdAt;
+    const daysSinceLastPurchase = (now.getTime() - lastInteraction.getTime()) / (1000 * 60 * 60 * 24);
+    
+    // Affinity Logic
+    const categoryCounts: Record<string, number> = {};
+    c.sales.forEach(s => s.items.forEach(item => {
+        const cat = item.product?.category?.name || "Uncategorized";
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + item.quantity;
+    }));
+    const primaryAffinity = Object.entries(categoryCounts).sort((a,b) => b[1] - a[1])[0]?.[0] || "N/A";
 
-      return {
+    // Cluster Status
+    let status = "Dormant";
+    if (c.sales.length > 5 && daysSinceLastPurchase < 30) status = "High Velocity";
+    else if (c.sales.length > 0 && daysSinceLastPurchase > 60) status = "At Risk";
+
+    return {
         id: c.id,
-        type: "CUSTOMER",
         name: c.name,
-        email: c.email,
-        phone: c.phone,
-        reliability,
         totalVolume,
-        debtAmount,
         lastInteraction,
-        nodeStatus: "VERIFIED",
-      };
-    }),
-    ...suppliers.map(s => {
-      const totalVolume = s.purchases.reduce((sum, p) => sum + Number(p.totalAmount), 0);
-      const lastInteraction = s.purchases.length > 0 ? s.purchases[0].createdAt : s.createdAt;
+        daysSinceLastPurchase,
+        primaryAffinity,
+        status
+    };
+  });
 
-      return {
-        id: s.id,
-        type: "SUPPLIER",
-        name: s.name,
-        email: s.email,
-        phone: s.phone,
-        reliability: 100, // Suppliers are assumed reliable for now
-        totalVolume,
-        debtAmount: 0,
-        lastInteraction,
-        nodeStatus: "VERIFIED",
-      };
-    })
-  ];
+  const clusterCounts = registryNodes.reduce((acc, n) => {
+      acc[n.status] = (acc[n.status] || 0) + 1;
+      return acc;
+  }, { "High Velocity": 0, "Dormant": 0, "At Risk": 0 } as Record<string, number>);
 
   return {
     nodes: registryNodes,
-    stats: {
-      totalEntities: registryNodes.length,
-      globalReliability: registryNodes.reduce((sum, n) => sum + n.reliability, 0) / (registryNodes.length || 1),
-      totalTradeVolume: registryNodes.reduce((sum, n) => sum + n.totalVolume, 0),
-    }
+    clusterCounts
   };
 }

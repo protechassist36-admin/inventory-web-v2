@@ -61,6 +61,7 @@ export default function ProductsPage() {
     name: "",
     sku: "",
     unitPrice: "",
+    costPrice: "",
     stockQuantity: "",
     minStockLevel: "10",
     categoryId: "",
@@ -139,6 +140,7 @@ export default function ProductsPage() {
       name: "",
       sku: "",
       unitPrice: "",
+      costPrice: "",
       stockQuantity: "",
       minStockLevel: "10",
       categoryId: "",
@@ -170,6 +172,7 @@ export default function ProductsPage() {
       name: product.name,
       sku: product.sku || "",
       unitPrice: product.unitPrice.toString(),
+      costPrice: product.costPrice?.toString() || "",
       stockQuantity: product.stockQuantity.toString(),
       minStockLevel: product.minStockLevel.toString(),
       categoryId: product.categoryId || "none",
@@ -291,7 +294,21 @@ export default function ProductsPage() {
                    </div>
                    <div className="space-y-2">
                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                       {formData.type === "SERVICE" ? "Rate per Hour/Unit (Le)" : "Market Value (Le)"}
+                       Cost Price (Le)
+                     </Label>
+                     <Input
+                       type="number"
+                       step="0.01"
+                       value={formData.costPrice}
+                       onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                       placeholder="0.00"
+                       className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black text-rose-600 text-lg"
+                       required
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                       {formData.type === "SERVICE" ? "Rate per Hour/Unit (Le)" : "Selling Price (Le)"}
                      </Label>
                      <Input
                        type="number"

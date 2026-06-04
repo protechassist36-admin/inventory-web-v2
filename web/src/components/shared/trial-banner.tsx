@@ -32,7 +32,7 @@ export function TrialBanner() {
     return () => clearInterval(timer);
   }, [session]);
 
-  if (!timeLeft || timeLeft.days > 14) return null;
+  if (!timeLeft || timeLeft.days > 7) return null;
 
   const isExpiringSoon = timeLeft.days <= 3;
 

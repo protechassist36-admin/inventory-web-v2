@@ -18,6 +18,15 @@ export async function processReturn(data: {
 
     await prisma.$transaction(async (tx) => {
       for (const item of data.items) {
+        // 0. Fetch Sale Item to get price information
+        const saleItem = await tx.saleItem.findFirst({
+          where: { saleId: data.saleId, productId: item.productId }
+        });
+        if (!saleItem) throw new Error("Sale item not found");
+
+        // Calculate total amount to deduct
+        const totalToDeduct = (Number(saleItem.unitPrice) * item.quantity);
+
         // 1. Update Stock (Increment back)
         await tx.product.update({
           where: { id: item.productId, businessId: businessId },
@@ -28,7 +37,18 @@ export async function processReturn(data: {
           },
         });
 
-        // 2. Record Stock Movement (Type RETURN)
+        // 2. Decrement Sale totalAmount
+        await tx.sale.update({
+          where: { id: data.saleId, businessId: businessId },
+          data: {
+            totalAmount: {
+              decrement: totalToDeduct,
+            },
+            status: "PARTIAL_RETURN"
+          },
+        });
+
+        // 3. Record Stock Movement (Type RETURN)
         await tx.stockMovement.create({
           data: {
             productId: item.productId,
@@ -40,9 +60,6 @@ export async function processReturn(data: {
           },
         });
       }
-
-      // 3. Mark Sale as partially/fully returned if needed
-      // For now, we'll just log it. A more robust system would update the Sale model status.
     });
 
     revalidatePath("/dashboard/inventory/products");

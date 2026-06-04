@@ -46,6 +46,13 @@ export default auth((req) => {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
+  // 4b. Enforce Trial Expiration
+  const trialEndDate = session?.user?.trialEndDate;
+  if (trialEndDate && new Date(trialEndDate) < new Date() && !path.startsWith('/pricing')) {
+     console.log("DEBUG: Trial expired, redirecting to pricing");
+     return NextResponse.redirect(new URL('/pricing', req.url));
+  }
+
   // 5. Enforce Business Context for non-SuperAdmins
   if (!businessId) {
     return NextResponse.redirect(new URL('/register', req.url));

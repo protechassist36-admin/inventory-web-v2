@@ -47,7 +47,7 @@ export async function getDebts() {
   }
 }
 
-export async function createDebtPayment(debtId: string, amount: number, paymentMethod: string = "CASH") {
+export async function createDebtPayment(debtId: string, amount: number, paymentMethod: string = "CASH", note?: string) {
   try {
     const session = await auth();
     if (!session?.user?.businessId) throw new Error("Unauthorized");
@@ -67,6 +67,7 @@ export async function createDebtPayment(debtId: string, amount: number, paymentM
           amount,
           paymentMethod,
           businessId,
+          note,
         },
       });
 

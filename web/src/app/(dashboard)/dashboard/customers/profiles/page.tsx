@@ -8,12 +8,20 @@ import { Input } from "@/components/ui/input";
 import { cn, getIndustryColor } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { getRegistryIntelligence } from "@/lib/actions/registry";
 
 export default function PurchaseProfilesPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const businessType = session?.user?.businessType || "SHOP";
   const colors = getIndustryColor(businessType);
+  
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    getRegistryIntelligence().then(setData);
+  }, []);
 
   return (
     <div className="space-y-8 p-6 md:p-10">
@@ -53,16 +61,16 @@ export default function PurchaseProfilesPage() {
                <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Cluster Status</h3>
                <div className="space-y-2">
                   {[
-                    { label: "High Velocity", color: "bg-emerald-500", count: 24 },
-                    { label: "Dormant", color: "bg-slate-300", count: 182 },
-                    { label: "At Risk", color: "bg-rose-500", count: 12 }
+                    { label: "High Velocity", color: "bg-emerald-500", key: "High Velocity" },
+                    { label: "Dormant", color: "bg-slate-300", key: "Dormant" },
+                    { label: "At Risk", color: "bg-rose-500", key: "At Risk" }
                   ].map((status, i) => (
                     <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                        <div className="flex items-center gap-2">
                           <div className={cn("h-2 w-2 rounded-full", status.color)} />
                           <span className="text-[10px] font-bold uppercase tracking-tight text-slate-600 dark:text-slate-400">{status.label}</span>
                        </div>
-                       <span className="text-xs font-black text-slate-900 dark:text-white">{status.count}</span>
+                       <span className="text-xs font-black text-slate-900 dark:text-white">{data?.clusterCounts?.[status.key] || 0}</span>
                     </div>
                   ))}
                </div>
@@ -71,10 +79,7 @@ export default function PurchaseProfilesPage() {
 
          <div className="lg:col-span-3 space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               {[
-                 { name: "John Kamara", id: "NODE-882", affinity: "Beverages", spend: "Le 12,450", trend: "+14%" },
-                 { name: "Sia Turay", id: "NODE-102", affinity: "Electronics", spend: "Le 8,200", trend: "-2%" }
-               ].map((profile, i) => (
+               {data?.nodes.map((profile: any, i: number) => (
                  <Card key={i} className="border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-sm group hover:border-primary/30 transition-all cursor-pointer">
                     <div className="flex justify-between items-start mb-6">
                        <div className="flex items-center gap-4">
@@ -83,7 +88,7 @@ export default function PurchaseProfilesPage() {
                           </div>
                           <div>
                              <h4 className="font-black text-lg text-slate-900 dark:text-white tracking-tight leading-none">{profile.name}</h4>
-                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{profile.id}</p>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 italic">ID: {profile.id.substring(0, 8)}</p>
                           </div>
                        </div>
                        <div className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 text-[8px] font-black uppercase tracking-widest shadow-sm">Verified</div>
@@ -92,11 +97,11 @@ export default function PurchaseProfilesPage() {
                     <div className="grid grid-cols-2 gap-4 border-t border-slate-50 dark:border-slate-800 pt-6">
                        <div>
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Primary Affinity</p>
-                          <p className="text-xs font-black text-slate-700 dark:text-slate-300 mt-1 uppercase italic">{profile.affinity}</p>
+                          <p className="text-xs font-black text-slate-700 dark:text-slate-300 mt-1 uppercase italic">{profile.primaryAffinity}</p>
                        </div>
                        <div className="text-right">
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Neural Spend</p>
-                          <p className="text-base font-[1000] text-slate-900 dark:text-white tracking-tighter mt-1">{profile.spend}</p>
+                          <p className="text-base font-[1000] text-slate-900 dark:text-white tracking-tighter mt-1">Le {Math.round(profile.totalVolume).toLocaleString()}</p>
                        </div>
                     </div>
 
@@ -114,7 +119,7 @@ export default function PurchaseProfilesPage() {
                         <h3 className="text-2xl font-[1000] tracking-tight uppercase italic">Audience Segmentation</h3>
                      </div>
                      <p className="text-slate-400 text-xs font-bold leading-relaxed uppercase tracking-widest max-w-sm">
-                       Our neural engines have detected 4 emerging customer clusters. Would you like to generate localized promotion nodes?
+                       Our neural engines have detected emerging customer clusters based on your latest commerce data.
                      </p>
                      <Button className="h-12 px-8 rounded-xl bg-indigo-600 text-white font-black uppercase text-[10px] tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">Initialize Sync</Button>
                   </div>

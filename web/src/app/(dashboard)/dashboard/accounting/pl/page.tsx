@@ -1,53 +1,92 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Sparkles, Construction } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn, getIndustryColor } from "@/lib/utils";
-import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getProfitLossData } from "@/lib/actions/pl";
+import { getProductProfitability } from "@/lib/actions/product-pl";
+import { subDays } from "date-fns";
+import { Loader2, TrendingUp, TrendingDown, DollarSign, Package } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export default function PlaceholderPage() {
-  const { data: session } = useSession();
-  const businessType = session?.user?.businessType || "SHOP";
-  const colors = getIndustryColor(businessType);
+export default function ProfitLossPage() {
+  const [data, setData] = useState<any>(null);
+  const [productData, setProductData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const end = new Date();
+    const start = subDays(end, 30);
+    Promise.all([
+      getProfitLossData(start, end),
+      getProductProfitability(start, end)
+    ]).then(([pl, products]) => {
+      setData(pl);
+      setProductData(products);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return <div className="flex justify-center p-20"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>;
+
+  const cards = [
+    { title: "Total Revenue", value: data.totalRevenue, icon: TrendingUp, color: "text-emerald-600" },
+    { title: "Total Expenses", value: data.totalExpenses, icon: TrendingDown, color: "text-rose-600" },
+    { title: "Net Profit", value: data.netProfit, icon: DollarSign, color: "text-indigo-600" },
+  ];
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="space-y-6 max-w-lg"
-      >
-        <div className={cn("mx-auto w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-2xl", colors.primary)}>
-          <Construction className="h-10 w-10 text-white" />
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className={cn("h-4 w-4", colors.text)} />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">Intelligence Node</span>
-            <Sparkles className={cn("h-4 w-4", colors.text)} />
-          </div>
-          <h1 className="text-4xl font-[1000] text-slate-900 dark:text-white tracking-tight">Profit & Loss Analysis</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
-            This module is currently being optimized for your {businessType.toLowerCase()} intelligence operations. 
-            Full neural integration is scheduled for the next deployment phase.
-          </p>
-        </div>
+    <div className="p-6 md:p-10 space-y-8">
+      <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Profit & Loss Analysis</h1>
+      
+      <div className="grid gap-6 md:grid-cols-3">
+        {cards.map((card, i) => (
+          <Card key={i} className="border-none shadow-xl shadow-slate-100/50 rounded-3xl p-6">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+               <CardTitle className="text-xs font-black text-slate-400 uppercase tracking-widest">{card.title}</CardTitle>
+               <card.icon className={cn("h-4 w-4", card.color)} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-[1000] tracking-tighter">Le {Math.round(card.value).toLocaleString()}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-        <Card className="border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-sm">
-          <CardContent className="p-0 space-y-4">
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-               <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Status</span>
-               <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 text-[10px] font-black uppercase tracking-tighter">In Development</span>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-               <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Priority</span>
-               <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 text-[10px] font-black uppercase tracking-tighter">High Tier</span>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <Card className="border-none shadow-xl shadow-slate-100/50 rounded-3xl p-6">
+        <CardHeader>
+          <CardTitle className="text-xl font-black text-slate-900">Product Profitability</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-slate-100">
+                <TableHead>Product</TableHead>
+                <TableHead className="text-right">Qty Sold</TableHead>
+                <TableHead className="text-right">Revenue</TableHead>
+                <TableHead className="text-right">Cost</TableHead>
+                <TableHead className="text-right">Profit</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {productData.map((p) => (
+                <TableRow key={p.id} className="border-slate-50">
+                  <TableCell className="font-bold flex items-center gap-3">
+                    <Package className="h-4 w-4 text-slate-400" />
+                    {p.name}
+                  </TableCell>
+                  <TableCell className="text-right font-black">{p.quantity}</TableCell>
+                  <TableCell className="text-right">Le {Math.round(p.totalRevenue).toLocaleString()}</TableCell>
+                  <TableCell className="text-right">Le {Math.round(p.totalCost).toLocaleString()}</TableCell>
+                  <TableCell className={cn("text-right font-black", p.profit >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                    Le {Math.round(p.profit).toLocaleString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

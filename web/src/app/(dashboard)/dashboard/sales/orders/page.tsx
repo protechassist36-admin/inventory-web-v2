@@ -110,7 +110,10 @@ export default function SalesOrdersPage() {
         getBusinessProfile().catch(e => { console.error("Business Profile Sync Failed:", e); throw e; })
       ]);
       
-      setSummary(summaryData);
+      const paidSales = salesData.filter((s: any) => s.paymentStatus === 'PAID');
+      const totalAmount = paidSales.reduce((sum: number, s: any) => sum + parseFloat(s.totalAmount), 0);
+      
+      setSummary({ totalOrders: paidSales.length, totalAmount: totalAmount, statusSummary: summaryData.statusSummary });
       setSales(salesData);
       setBusiness(businessData);
     } catch (error: any) {

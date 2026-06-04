@@ -51,18 +51,25 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
             variant="destructive" 
             size="icon" 
             className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-            onClick={() => { setPreview(null); onChange(""); }}
+            onClick={(e) => { e.preventDefault(); setPreview(null); onChange(""); }}
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       ) : (
-        <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center gap-2">
+        <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center gap-2 hover:border-indigo-300 transition-colors">
           <Upload className="h-8 w-8 text-slate-400" />
-          <label className="cursor-pointer text-sm font-bold text-indigo-600">
-            Upload Image
-            <input type="file" className="hidden" accept="image/*" onChange={handleUpload} />
+          <label className="cursor-pointer text-sm font-bold text-indigo-600 hover:text-indigo-800">
+            Upload or Take Picture
+            <input 
+                type="file" 
+                className="hidden" 
+                accept="image/*" 
+                capture="environment" 
+                onChange={handleUpload} 
+            />
           </label>
+          <p className="text-[10px] text-slate-400 italic">(Optional)</p>
         </div>
       )}
       {loading && <p className="text-xs text-slate-500">Processing and uploading...</p>}
