@@ -51,32 +51,30 @@ export default async function DashboardLayout({
   }
 
   if (session?.user?.businessId && session?.user?.role !== "SUPERADMIN") {
-    // ... existing logic ...
-    const businessExists = await prisma.business.findUnique({
-      where: { id: session.user.businessId },
-      select: { id: true }
-    });
+    try {
+      const businessExists = await prisma.business.findUnique({
+        where: { id: session.user.businessId },
+        select: { id: true }
+      });
 
-    if (!businessExists) {
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-50">
-          <div className="text-center space-y-4 p-8 bg-white rounded-[2rem] shadow-xl border border-slate-100">
-             <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Bell className="h-6 w-6" />
-             </div>
-             <h2 className="text-xl font-black text-slate-900">Session Expired</h2>
-             <p className="text-slate-500 font-medium max-w-xs">Your business profile was not found. This usually happens after a system reset.</p>
-             <form action={async () => {
-               "use server";
-               await signOut({ redirectTo: "/register" });
-             }}>
-               <button className="w-full h-12 bg-slate-900 text-white font-bold rounded-xl">
+      if (!businessExists) {
+        return (
+          <div className="flex min-h-screen items-center justify-center bg-slate-50">
+            <div className="text-center space-y-4 p-8 bg-white rounded-[2rem] shadow-xl border border-slate-100">
+               <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Bell className="h-6 w-6" />
+               </div>
+               <h2 className="text-xl font-black text-slate-900">Session Expired</h2>
+               <p className="text-slate-500 font-medium max-w-xs">Your business profile was not found. This usually happens after a system reset.</p>
+               <a href="/register" className="block w-full h-12 bg-slate-900 text-white font-bold rounded-xl flex items-center justify-center">
                  Register New Business
-               </button>
-             </form>
+               </a>
+            </div>
           </div>
-        </div>
-      );
+        );
+      }
+    } catch (dbError) {
+      console.error("Layout Database Error:", dbError);
     }
   }
 

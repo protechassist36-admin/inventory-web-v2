@@ -99,12 +99,14 @@ export default function SettingsPage() {
       setSubscription(sub);
       setUsers(team);
       setRoles(rolesData);
-      setPermissions(permissionsData);
+      setPermissions(permissionsData || []);
+      
       if (rolesData.length > 0 && !userData.roleId) {
         setUserData(prev => ({ ...prev, roleId: rolesData[0].id }));
       }
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error("Settings Fetch Error:", error);
+      toast.error("Cloud synchronization failed: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -316,12 +318,15 @@ export default function SettingsPage() {
                             { label: "System", prefix: "menu:system" },
                             { label: "Support", prefix: "menu:support" }
                           ].map((group) => {
+                             if (!permissions || !Array.isArray(permissions)) return null;
+
                              const groupPermissions = permissions.filter(p => 
                                p.key === group.prefix || 
                                p.key.startsWith(group.prefix + ":") ||
                                (group.extraKeys && group.extraKeys.includes(p.key))
                              );
-                             if (groupPermissions.length === 0) return null;
+                             
+                             if (!groupPermissions || groupPermissions.length === 0) return null;
                              
                              return (
                                <div key={group.label} className="space-y-3">
