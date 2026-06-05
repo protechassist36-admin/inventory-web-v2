@@ -109,6 +109,9 @@ export async function createUser(data: { name: string; email: string; password: 
     ];
     
     // Find permission IDs for these keys
+    const allPermissions = await prisma.permission.findMany();
+    console.log("DEBUG: All available permissions:", allPermissions.map(p => p.key));
+    
     const permissions = await prisma.permission.findMany({
         where: { key: { in: restrictedPermissions } }
     });
