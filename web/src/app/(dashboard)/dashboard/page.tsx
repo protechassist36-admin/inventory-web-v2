@@ -92,15 +92,15 @@ export default function DashboardPage() {
   
   const getGreeting = () => {
     const hour = new Date().getHours();
-    const role = session?.user?.role?.toLowerCase() || "User";
-    const name = session?.user?.name || "Partner";
+    const name = session?.user?.email?.split('@')[0] || "Partner";
+    const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
     
     let timeGreeting = "Hello";
     if (hour < 12) timeGreeting = "Good Morning";
     else if (hour < 17) timeGreeting = "Good Afternoon";
     else timeGreeting = "Good Evening";
 
-    return `${timeGreeting}, ${role} ${name}`;
+    return `${timeGreeting}, ${formattedName}`;
   };
 
   const getContextInfo = () => {

@@ -103,9 +103,21 @@ export async function createUser(data: { name: string; email: string; password: 
     });
 
     const restrictedPermissions = [
-        "sales", "products", "categories", "stock-history", "expiry-tracking", 
-        "suppliers", "sales-history", "sales-orders", "credit-sales", 
-        "returns", "notifications", "settings", "support", "manual"
+        "menu:overview", // Dashboard Overview
+        "menu:inventory", // Inventory (Base)
+        "menu:inventory:products", // Products
+        "menu:inventory:history", // Stock History
+        "menu:inventory:expiry", // Expiry Tracking
+        "menu:sales", // Commerce (Sales Base)
+        "menu:sales:pos", // Launch POS
+        "menu:sales:history", // Sales History
+        "menu:sales:returns", // Returns
+        "menu:customers", // Relationships
+        "menu:customers:registry", // Customer Registry
+        "menu:customers:loyalty", // Loyalty Program
+        "menu:staff:attendance", // Attendance
+        "menu:system:notifications", // Notifications
+        "menu:support:manual" // System Manual
     ];
     
     // Find permission IDs for these keys
