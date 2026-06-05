@@ -61,11 +61,13 @@ export async function getRoles() {
 
 export async function createUser(data: { name: string; email: string; password: string; roleId: string }) {
   try {
+    console.log("DEBUG: createUser called with:", { name: data.name, email: data.email, roleId: data.roleId });
     const session = await auth();
     if (!session?.user?.businessId) throw new Error("Unauthorized");
 
     const businessId = session.user.businessId;
     const prisma = getTenantPrisma(businessId);
+    console.log("DEBUG: Tenant Prisma initialized for business:", businessId);
 
     // 1. Check Plan Limits
     const business = await globalPrisma.business.findUnique({
@@ -82,9 +84,11 @@ export async function createUser(data: { name: string; email: string; password: 
 
     const userCount = business?._count.users || 0;
     const plan = business?.plan || "FREE";
+    console.log("DEBUG: Plan check:", { plan, userCount });
 
     const check = canPerformAction(plan, "maxStaff", userCount);
     if (!check.allowed) {
+      console.error("DEBUG: Plan limit reached:", check.message);
       throw new Error(check.message);
     }
 
@@ -93,6 +97,7 @@ export async function createUser(data: { name: string; email: string; password: 
     const verificationToken = generateVerificationToken();
 
     // 3. Find/Create the 'Employee' role and ensure permissions
+    console.log("DEBUG: Searching for Employee role...");
     let employeeRole = await prisma.role.findFirst({
         where: { businessId: businessId, name: "Employee" }
     });
@@ -107,8 +112,10 @@ export async function createUser(data: { name: string; email: string; password: 
     const permissions = await prisma.permission.findMany({
         where: { key: { in: restrictedPermissions } }
     });
+    console.log("DEBUG: Found permissions:", permissions.length);
 
     if (!employeeRole) {
+        console.log("DEBUG: Employee role not found, creating it...");
         employeeRole = await prisma.role.create({
             data: {
                 name: "Employee",
@@ -118,7 +125,9 @@ export async function createUser(data: { name: string; email: string; password: 
                 }
             }
         });
+        console.log("DEBUG: Employee role created:", employeeRole.id);
     } else {
+        console.log("DEBUG: Updating existing Employee role:", employeeRole.id);
         // Update permissions for existing Employee role
         await prisma.role.update({
             where: { id: employeeRole.id },
@@ -140,6 +149,7 @@ export async function createUser(data: { name: string; email: string; password: 
         verificationToken,
       },
     });
+    console.log("DEBUG: User created:", user.id);
 
     await logAudit({
       action: "CREATE",
