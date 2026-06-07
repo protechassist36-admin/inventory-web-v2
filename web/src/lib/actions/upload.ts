@@ -1,8 +1,9 @@
 "use server";
 
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile } from "fs/promises";
 import path from "path";
 import sharp from "sharp";
+import fs from "fs";
 
 async function processAndSaveImage(file: File, subDir: string) {
   const bytes = await file.arrayBuffer();
@@ -16,30 +17,33 @@ async function processAndSaveImage(file: File, subDir: string) {
 
   const fileName = `${Date.now()}-${file.name.split('.')[0].replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webp`;
   
-  // Robust directory detection
-  let uploadDir = "";
-  const rootPublic = path.join(process.cwd(), "public", "uploads", subDir);
-  const webPublic = path.join(process.cwd(), "web", "public", "uploads", subDir);
+  let baseDir = process.cwd();
+  let publicPath = "";
   
-  if (require('fs').existsSync(path.join(process.cwd(), "web", "public"))) {
-    uploadDir = webPublic;
+  // Check common project structures
+  if (fs.existsSync(path.join(baseDir, "web", "public"))) {
+    publicPath = path.join(baseDir, "web", "public", "uploads", subDir);
+  } else if (fs.existsSync(path.join(baseDir, "public"))) {
+    publicPath = path.join(baseDir, "public", "uploads", subDir);
+  } else if (baseDir.endsWith('web')) {
+     publicPath = path.join(baseDir, "public", "uploads", subDir);
   } else {
-    uploadDir = rootPublic;
-  }
-  
-  console.log(`DEBUG: Uploading image. Target directory: ${uploadDir}`);
-  
-  // Ensure directory exists
-  try {
-    await mkdir(uploadDir, { recursive: true });
-    console.log(`DEBUG: Directory ensured: ${uploadDir}`);
-  } catch (error) {
-    console.error(`CRITICAL: Failed to create directory ${uploadDir}:`, error);
+    // Ultimate fallback
+    publicPath = path.join(baseDir, "public", "uploads", subDir);
   }
 
-  const finalPath = path.join(uploadDir, fileName);
-  await writeFile(finalPath, processedBuffer);
-  console.log(`DEBUG: Image saved to: ${finalPath}`);
+  console.log(`DEBUG: Target Path: ${publicPath}`);
+  
+  // Ensure directory exists
+  if (!fs.existsSync(publicPath)) {
+    fs.mkdirSync(publicPath, { recursive: true });
+    console.log(`DEBUG: Created DIR: ${publicPath}`);
+  }
+
+  const finalFilePath = path.join(publicPath, fileName);
+  await writeFile(finalFilePath, processedBuffer);
+  
+  console.log(`DEBUG: Saved to: ${finalFilePath}`);
 
   return `/uploads/${subDir}/${fileName}`;
 }
@@ -48,11 +52,9 @@ export async function uploadProductImage(formData: FormData) {
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file uploaded");
 
-  // Validate file type
   const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (!allowedTypes.includes(file.type)) throw new Error("Invalid file type. Please upload an image (JPEG, PNG, WEBP, GIF).");
+  if (!allowedTypes.includes(file.type)) throw new Error("Invalid file type.");
 
-  // Validate size (5MB limit for more flexibility)
   if (file.size > 5 * 1024 * 1024) throw new Error("File too large (max 5MB)");
 
   return await processAndSaveImage(file, "products");
