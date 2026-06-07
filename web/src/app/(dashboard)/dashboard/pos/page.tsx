@@ -341,7 +341,24 @@ export default function POSPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                       <div className="font-bold truncate">{item.name}</div>
-                      <div className="text-slate-500">{item.quantity} x Le {Math.round(item.price).toLocaleString()}</div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <button 
+                            type="button"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="h-4 w-4 rounded bg-slate-100 flex items-center justify-center hover:bg-slate-200"
+                        >
+                            <Minus size={10} />
+                        </button>
+                        <span className="text-[10px] font-bold w-4 text-center">{item.quantity}</span>
+                        <button 
+                            type="button"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="h-4 w-4 rounded bg-slate-100 flex items-center justify-center hover:bg-slate-200"
+                        >
+                            <Plus size={10} />
+                        </button>
+                        <span className="text-slate-400 ml-1">x Le {Math.round(item.price).toLocaleString()}</span>
+                      </div>
                   </div>
                   <div className="font-black text-slate-900">Le {Math.round(item.price * item.quantity).toLocaleString()}</div>
                </div>

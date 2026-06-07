@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, MoreVertical, Package, Search, Filter, Download, ArrowUpDown } from "lucide-react";
+import { Plus, Minus, Pencil, Trash2, MoreVertical, Package, Search, Filter, Download, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -327,14 +327,32 @@ export default function ProductsPage() {
                      {formData.type === "PRODUCT" && (
                       <div className="space-y-2 animate-in slide-in-from-left-2 duration-300">
                         <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">In-Stock Volume</Label>
-                        <Input
-                          type="number"
-                          value={formData.stockQuantity}
-                          onChange={(e) => setFormData({ ...formData, stockQuantity: e.target.value })}
-                          placeholder="0"
-                          className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black"
-                          required
-                        />
+                        <div className="flex items-center gap-2">
+                           <Button 
+                              type="button" 
+                              variant="outline" 
+                              className="h-12 w-12 rounded-xl border-slate-100 bg-slate-100 hover:bg-slate-200"
+                              onClick={() => setFormData({ ...formData, stockQuantity: Math.max(0, parseInt(formData.stockQuantity || "0") - 1).toString() })}
+                           >
+                              <Minus size={20} />
+                           </Button>
+                           <Input
+                             type="number"
+                             value={formData.stockQuantity}
+                             onChange={(e) => setFormData({ ...formData, stockQuantity: e.target.value })}
+                             placeholder="0"
+                             className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black text-center"
+                             required
+                           />
+                           <Button 
+                              type="button" 
+                              variant="outline" 
+                              className="h-12 w-12 rounded-xl border-slate-100 bg-slate-100 hover:bg-slate-200"
+                              onClick={() => setFormData({ ...formData, stockQuantity: (parseInt(formData.stockQuantity || "0") + 1).toString() })}
+                           >
+                              <Plus size={20} />
+                           </Button>
+                        </div>
                       </div>
                      )}
                      {isPharmacy && (

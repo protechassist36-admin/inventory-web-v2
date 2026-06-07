@@ -22,33 +22,41 @@ interface POSState {
 
 export const usePOSStore = create<POSState>((set, get) => ({
   cart: [],
+  total: 0,
   addItem: (item) => {
     const { cart } = get();
     const existingItem = cart.find((i) => i.id === item.id);
+    let newCart;
     if (existingItem) {
-      set({
-        cart: cart.map((i) =>
+      newCart = cart.map((i) =>
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        ),
-      });
+        );
     } else {
-      set({ cart: [...cart, { ...item, quantity: 1 }] });
+      newCart = [...cart, { ...item, quantity: 1 }];
     }
+    set({ 
+        cart: newCart,
+        total: newCart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    });
   },
   removeItem: (id) => {
-    set({ cart: get().cart.filter((i) => i.id !== id) });
+    const newCart = get().cart.filter((i) => i.id !== id);
+    set({ 
+        cart: newCart,
+        total: newCart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    });
   },
   updateQuantity: (id, quantity) => {
+    let newCart;
     if (quantity <= 0) {
-      get().removeItem(id);
+      newCart = get().cart.filter((i) => i.id !== id);
     } else {
-      set({
-        cart: get().cart.map((i) => (i.id === id ? { ...i, quantity } : i)),
-      });
+      newCart = get().cart.map((i) => (i.id === id ? { ...i, quantity } : i));
     }
+    set({
+        cart: newCart,
+        total: newCart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    });
   },
-  clearCart: () => set({ cart: [] }),
-  get total() {
-    return get().cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  },
+  clearCart: () => set({ cart: [], total: 0 }),
 }));
