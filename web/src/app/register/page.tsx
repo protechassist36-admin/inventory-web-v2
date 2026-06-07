@@ -23,14 +23,27 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   
-  const [formData, setFormData] = useState({
-    businessName: "",
-    email: "",
-    password: "",
-    businessType: "SHOP",
-    plan: "FREE",
-    logoUrl: "",
-  });
+  const businessTypes = [
+    { id: "SHOP", label: "General Retail" },
+    { id: "RESTAURANT", label: "Restaurant" },
+    { id: "BAR", label: "Bar" },
+    { id: "PHARMACY", label: "Pharmacy" },
+    { id: "SUPERMARKET", label: "Supermarket" },
+    { id: "BOUTIQUE", label: "Boutique" },
+    { id: "ELECTRONICS", label: "Electronics Store" },
+    { id: "WAREHOUSE", label: "Warehouse" }
+  ];
+
+  const toggleBusinessType = (type: string) => {
+    setFormData(prev => {
+      const types = prev.businessType.split(',');
+      if (types.includes(type)) {
+        return { ...prev, businessType: types.filter(t => t !== type).join(',') };
+      } else {
+        return { ...prev, businessType: [...types.filter(t => t !== ""), type].join(',') };
+      }
+    });
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,18 +98,22 @@ export default function RegisterPage() {
                 <Label htmlFor="businessName" className="text-xs font-black uppercase text-slate-500">Business Name</Label>
                 <Input id="businessName" value={formData.businessName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, businessName: e.target.value})} required className="h-12 rounded-xl" />
               </div>
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="businessType" className="text-xs font-black uppercase text-slate-500">Business Type</Label>
-                <Select value={formData.businessType} onValueChange={(val: string | null) => setFormData({...formData, businessType: val ?? "SHOP"})}>
-                  <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SHOP">General Shop</SelectItem>
-                    <SelectItem value="RESTAURANT">Restaurant</SelectItem>
-                    <SelectItem value="BAR">Bar</SelectItem>
-                    <SelectItem value="PHARMACY">Pharmacy</SelectItem>
-                    <SelectItem value="SUPERMARKET">Supermarket</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3 col-span-2">
+                <Label className="text-xs font-black uppercase text-slate-500">Business Type(s)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {businessTypes.map((type) => (
+                    <div key={type.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={type.id}
+                        checked={formData.businessType.split(',').includes(type.id)}
+                        onChange={() => toggleBusinessType(type.id)}
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <Label htmlFor={type.id} className="text-sm font-medium text-slate-700 cursor-pointer">{type.label}</Label>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="email" className="text-xs font-black uppercase text-slate-500">Email</Label>

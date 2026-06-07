@@ -123,6 +123,8 @@ export default function POSPage() {
   useEffect(() => {
     setIsMounted(true);
     fetchCustomers();
+    // Trigger sync on mount to ensure local DB reflects latest server changes
+    initialSync();
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -146,6 +148,12 @@ export default function POSPage() {
     },
     [selectedCategory]
   );
+  
+  useEffect(() => {
+    if (products && products.length > 0) {
+      console.log("DEBUG POS: First product data:", products[0]);
+    }
+  }, [products]);
 
   const categories = useLiveQuery(() => db.categories.toArray());
 
@@ -482,8 +490,10 @@ export default function POSPage() {
                           toast.error("Product is out of stock!");
                           return;
                         }
+                        console.log("DEBUG POS: Adding to cart, imageUrl:", p.imageUrl);
                         addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1, imageUrl: p.imageUrl });
                       }}
+
                       >
                         <div className="aspect-square bg-slate-50 rounded-md sm:rounded-lg mb-1.5 sm:mb-2 flex items-center justify-center relative overflow-hidden">
                           {p.imageUrl ? (

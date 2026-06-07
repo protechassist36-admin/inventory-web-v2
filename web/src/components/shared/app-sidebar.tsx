@@ -10,23 +10,11 @@ import {
   Settings,
   ChevronRight,
   LogOut,
-  Utensils,
   Bell,
   ShieldCheck,
   Activity as ActivityIcon,
   CreditCard,
-  Moon,
-  Sun,
-  Stethoscope,
-  Pill,
-  History,
-  FileText,
-  Heart,
-  Truck,
-  PlusSquare,
-  Building2,
   Wallet,
-  Calculator,
   UserCheck,
   Book,
   DollarSign
@@ -40,9 +28,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
 import {
@@ -61,12 +46,69 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { getBusinessContext } from "@/lib/actions/auth";
 import { motion } from "framer-motion";
 
+import { barSidebarConfig } from "@/lib/sidebar-configs/bar";
+import { restaurantSidebarConfig } from "@/lib/sidebar-configs/restaurant";
+import { pharmacySidebarConfig } from "@/lib/sidebar-configs/pharmacy";
+import { supermarketSidebarConfig } from "@/lib/sidebar-configs/supermarket";
+
+// Helper to get config
+const getSidebarConfig = (type: string) => {
+  switch (type) {
+    case "BAR": return barSidebarConfig;
+    case "RESTAURANT": return restaurantSidebarConfig;
+    case "PHARMACY": return pharmacySidebarConfig;
+    case "SUPERMARKET": return supermarketSidebarConfig;
+    default: return null; 
+  }
+};
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession();
   const [businessContext, setBusinessContext] = React.useState({ name: "Loading...", logoUrl: null as string | null });
   const [mounted, setMounted] = React.useState(false);
   const pathname = usePathname();
-  const businessType = session?.user?.businessType || "SHOP";
+  const businessTypesString = session?.user?.businessType || "SHOP";
+  const businessTypes = businessTypesString.split(',').filter(t => t !== "");
+
+  // Use dynamic configuration: Merge items from all applicable types
+  const navGroups = React.useMemo(() => {
+    const configs = businessTypes.map(getSidebarConfig).filter(Boolean);
+    if (configs.length === 0) return [];
+    
+    // Merge all configurations
+    const merged: any[] = [];
+    configs.forEach(config => {
+        config?.forEach(group => {
+            const existingGroup = merged.find(g => g.label === group.label);
+            if (existingGroup) {
+                // Merge items, avoiding duplicates by title
+                group.items.forEach(item => {
+                    if (!existingGroup.items.find((i: any) => i.title === item.title)) {
+                        existingGroup.items.push(item);
+                    }
+                });
+            } else {
+                merged.push({...group, items: [...group.items]});
+            }
+        });
+    });
+    return merged;
+  }, [businessTypesString]);
+  
+  // Need to filter groups based on user permissions
+  const userRole = session?.user?.role || "STAFF";
+  const isAdmin = userRole === "ADMIN" || userRole === "SUPERADMIN";
+  const userPermissions = session?.user?.permissions || [];
+  const hasPermission = (permission?: string) => {
+    if (!permission) return true;
+    if (isAdmin) return true;
+    return userPermissions.includes(permission);
+  };
+
+  const filteredNavGroups = navGroups.map(group => ({
+    ...group,
+    items: group.items.filter(item => hasPermission((item as any).permission))
+  })).filter(group => group.items.length > 0);
 
   React.useEffect(() => {
     setMounted(true);
@@ -81,199 +123,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       setBusinessContext({ name: "Global Admin", logoUrl: null });
     }
   }, [session?.user?.businessId, mounted]);
-
-  const getRelationshipsConfig = () => {
-    switch(businessType) {
-      case "PHARMACY":
-        return {
-          title: "Patients/CRM",
-          icon: Users,
-          items: [
-            { title: "Registry", url: "/dashboard/patients" },
-            { title: "Prescriptions", url: "/dashboard/patients/prescriptions" },
-            { title: "Insurance", url: "/dashboard/patients/insurance" },
-          ],
-        };
-      case "RESTAURANT":
-      case "BAR":
-        return {
-          title: "Guests/CRM",
-          icon: Users,
-          items: [
-            { title: "Guest List", url: "/dashboard/customers" },
-            { title: "Reservations", url: "/dashboard/customers/reservations" },
-            { title: "Preferences", url: "/dashboard/customers/preferences" },
-          ],
-        };
-      default: // SHOP / RETAIL
-        return {
-          title: "Customers/CRM",
-          icon: Users,
-          items: [
-            { title: "Customer Registry", url: "/dashboard/customers" },
-            { title: "Loyalty Program", url: "/dashboard/customers/loyalty" },
-            { title: "Purchase Profiles", url: "/dashboard/customers/profiles" },
-          ],
-        };
-    }
-  };
-
-  const relConfig = getRelationshipsConfig();
-
-  const userRole = session?.user?.role || "STAFF";
-
-  const isSuperAdmin = userRole === "SUPERADMIN";
-  const isAdmin = userRole === "ADMIN" || isSuperAdmin;
-
-  interface NavItem {
-    title: string;
-    url: string;
-    icon?: any;
-    hidden?: boolean;
-    permission?: string;
-    items?: NavItem[];
-  }
-
-  interface NavGroup {
-    label: string;
-    hidden?: boolean;
-    items: NavItem[];
-  }
-
-  const userPermissions = session?.user?.permissions || [];
-  const hasPermission = (permission?: string) => {
-    if (!permission) return true;
-    if (isAdmin) return true;
-    return userPermissions.includes(permission);
-  };
-
-  const navGroups: NavGroup[] = [
-    {
-      label: "Intelligence",
-      items: [
-        { title: "Overview", url: "/dashboard", icon: LayoutDashboard, permission: "menu:overview" },
-        { title: "Intelligence Hub", url: "/dashboard/registry", icon: ShieldCheck, permission: "menu:intelligence:hub" },
-        { title: "Analytics", url: "/dashboard/analytics", icon: ActivityIcon, permission: "menu:intelligence:analytics" },
-        { title: "Reports", url: "/dashboard/reports", icon: BarChart3, permission: "menu:intelligence:reports" },
-      ]
-    },
-    {
-      label: "Supply Chain",
-      items: [
-        {
-          title: "Inventory",
-          url: "/dashboard/inventory",
-          icon: Package,
-          permission: "menu:inventory",
-          items: [
-            { title: "Products", url: "/dashboard/inventory/products" },
-            { title: "Network Exchange", url: "/dashboard/inventory/network" },
-            { title: "Categories", url: "/dashboard/inventory/categories" },
-            { title: "Batches", url: "/dashboard/inventory/batches" },
-            { title: "Stock History", url: "/dashboard/inventory/history" },
-            { title: "Expiry Tracking", url: "/dashboard/inventory/expiry" },
-          ],
-        },
-        {
-          title: "Purchases",
-          url: "/dashboard/purchases",
-          icon: Truck,
-          permission: "menu:purchases",
-          items: [
-            { title: "Suppliers", url: "/dashboard/purchases/suppliers" },
-            { title: "Purchase Orders", url: "/dashboard/purchases" },
-            { title: "Returns", url: "/dashboard/purchases/returns" },
-          ],
-        },
-      ]
-    },
-    {
-      label: "Commerce",
-      items: [
-        {
-          title: "Sales",
-          url: "/dashboard/sales",
-          icon: ShoppingCart,
-          permission: "menu:sales",
-          items: [
-            { title: "Launch POS", url: "/dashboard/pos" },
-            { title: "Sales History", url: "/dashboard/sales/history" },
-            { title: "Sales Orders", url: "/dashboard/sales/orders" },
-            { title: "Credit Sales", url: "/dashboard/sales/credit" },
-            { title: "Returns", url: "/dashboard/sales/returns" },
-          ],
-        },
-      ],
-    },
-    {
-      label: "Relationships",
-      items: [
-        {
-          title: relConfig.title,
-          url: "/dashboard/customers",
-          icon: relConfig.icon,
-          permission: "menu:customers",
-          items: relConfig.items,
-        },
-      ]
-    },
-    {
-      label: "Finance",
-      items: [
-        {
-          title: "Accounting",
-          url: "/dashboard/accounting",
-          icon: Wallet,
-          permission: "menu:accounting",
-          items: [
-            { title: "Expenses", url: "/dashboard/accounting/expenses" },
-            { title: "Profit & Loss", url: "/dashboard/accounting/pl" },
-            { title: "Cash Flow", url: "/dashboard/accounting/cashflow" },
-          ],
-        },
-        { title: "Billing", url: "/dashboard/billing", icon: CreditCard, permission: "menu:accounting:billing" },
-      ]
-    },
-    {
-      label: "Administrative",
-      items: [
-        {
-          title: "Team / HR",
-          url: "/dashboard/staff",
-          icon: UserCheck,
-          permission: "menu:staff",
-          items: [
-            { title: "Employees", url: "/dashboard/staff/employees" },
-            { title: "Attendance", url: "/dashboard/staff/attendance" },
-            { title: "Payroll", url: "/dashboard/staff/payroll" },
-          ],
-        },
-        {
-          title: "System",
-          url: "/dashboard/system",
-          icon: Settings,
-          permission: "menu:system",
-          items: [
-            { title: "Audit Logs", url: "/dashboard/system/logs" },
-            { title: "Notifications", url: "/dashboard/system/notifications" },
-            { title: "Settings", url: "/dashboard/system/settings" },
-          ],
-        },
-      ]
-    },
-    {
-      label: "Support",
-      items: [
-        { title: "System Manual", url: "/dashboard/manual", icon: Book, permission: "menu:support:manual" },
-        { title: "Pricing Plans", url: "/pricing", icon: DollarSign, permission: "menu:support:pricing" },
-      ]
-    }
-  ].filter(group => {
-    // Filter items within group
-    group.items = group.items.filter(item => ((item as any).hidden !== true) && hasPermission(item.permission));
-    // Filter group if no items left
-    return group.items.length > 0;
-  });
 
   if (!mounted) {
     return <Sidebar collapsible="icon" className="border-r border-slate-100 dark:border-slate-800 shadow-sm" {...props} />;
@@ -291,7 +140,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
                 <div className="relative flex aspect-square size-10 items-center justify-center overflow-hidden rounded-2xl shadow-xl shadow-primary/20 ring-4 ring-primary/5">
                   <Image 
-                    src={businessContext.logoUrl || "/images/logo2.jpeg"} 
+                    src={`${businessContext.logoUrl || "/images/logo2.jpeg"}?t=${Date.now()}`} 
                     alt="Logo" 
                     fill 
                     className="object-cover"
@@ -333,70 +182,35 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       
       <SidebarContent className="px-3">
         <SidebarMenu className="gap-6 pb-8">
-          {navGroups.map((group) => (
+          {filteredNavGroups.map((group) => (
             <div key={group.label} className="space-y-2">
               <div className="px-4 text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em] mb-3">{group.label}</div>
               <div className="space-y-1">
-                {group.items.filter(item => !item.hidden).map((item: any) => {
+                {group.items.map((item: any) => {
                   const isActive = pathname.startsWith(item.url) && (item.url !== "/dashboard" || pathname === "/dashboard");
                   const Icon = item.icon;
                   return (
-                    <SidebarMenuItem key={item.title} className="relative" id={item.title === "Inventory" ? "sidebar-inventory" : item.title === "Sales" ? "sidebar-pos" : undefined}>
+                    <SidebarMenuItem key={item.title} className="relative">
                       {isActive && (
                         <motion.div 
                           layoutId="active-pill"
                           className="absolute left-[-12px] top-2 bottom-2 w-1.5 bg-primary rounded-r-full shadow-[4px_0_12px_rgba(79,70,229,0.3)] z-10"
                         />
                       )}
-                      {item.items ? (
-                        <>
-                          <SidebarMenuButton 
-                            tooltip={item.title} 
-                            isActive={isActive}
-                            className={cn(
-                              "h-11 rounded-xl transition-all duration-300 font-bold px-4 group/btn",
-                              isActive 
-                                ? "bg-slate-900 text-white shadow-xl dark:bg-indigo-600 dark:shadow-indigo-500/20" 
-                                : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98]"
-                            )}
-                          >
-                            <Icon className={cn("size-5 transition-transform duration-300 group-hover/btn:scale-110", isActive ? "text-white" : "text-slate-400 dark:text-slate-500 group-hover/btn:text-primary")} />
-                            <span>{item.title}</span>
-                            <ChevronRight className={cn("ml-auto size-3.5 transition-transform duration-300 group-data-[state=open]/menu-item:rotate-90", isActive ? "text-white/50" : "text-slate-300 dark:text-slate-700")} />
-                          </SidebarMenuButton>
-                          <SidebarMenuSub className="ml-4 border-l-2 border-slate-100 dark:border-slate-800 mt-1 pl-2 space-y-0.5">
-                            {item.items.map((subItem: any) => {
-                              const isSubActive = pathname === subItem.url;
-                              return (
-                                <SidebarMenuSubItem key={subItem.title}>
-                                  <SidebarMenuSubButton 
-                                    isActive={isSubActive} 
-                                    className="h-9 rounded-lg font-bold text-[11px] transition-all"
-                                    render={<Link href={subItem.url} className={cn(isSubActive ? "text-primary bg-primary/5" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white")} />}
-                                  >
-                                      <span>{subItem.title}</span>
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                              );
-                            })}
-                          </SidebarMenuSub>
-                        </>
-                      ) : (
-                        <SidebarMenuButton 
-                          tooltip={item.title} 
-                          isActive={isActive}
-                          className={cn(
-                            "h-11 rounded-xl transition-all duration-300 font-bold px-4 group/btn",
-                            isActive 
-                              ? "bg-slate-900 text-white shadow-xl dark:bg-indigo-600 dark:shadow-indigo-500/20" 
-                              : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98]"
-                          )}
-                          render={<Link href={item.url} />}
-                        >
-                            <Icon className={cn("size-5 transition-transform duration-300 group-hover/btn:scale-110", isActive ? "text-white" : "text-slate-400 dark:text-slate-500 group-hover/btn:text-primary")} />
-                            <span>{item.title}</span>
-                        </SidebarMenuButton>
-                      )}
+                      <SidebarMenuButton 
+                        tooltip={item.title} 
+                        isActive={isActive}
+                        className={cn(
+                          "h-11 rounded-xl transition-all duration-300 font-bold px-4 group/btn",
+                          isActive 
+                            ? "bg-slate-900 text-white shadow-xl dark:bg-indigo-600 dark:shadow-indigo-500/20" 
+                            : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98]"
+                        )}
+                        render={<Link href={item.url} />}
+                      >
+                          <Icon className={cn("size-5 transition-transform duration-300 group-hover/btn:scale-110", isActive ? "text-white" : "text-slate-400 dark:text-slate-500 group-hover/btn:text-primary")} />
+                          <span>{item.title}</span>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
                 })}
