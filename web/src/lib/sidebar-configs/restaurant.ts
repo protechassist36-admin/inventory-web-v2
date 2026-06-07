@@ -5,23 +5,23 @@ export const restaurantSidebarConfig = [
     label: "Intelligence", 
     items: [
       { title: "Overview", url: "/dashboard", icon: LayoutDashboard, permission: "menu:overview" }, 
-      { title: "Daily Sales", url: "/dashboard/sales/today", icon: BarChart3, permission: "menu:sales" }
+      { title: "Daily Sales", url: "/dashboard/analytics", icon: BarChart3, permission: "menu:sales" }
     ] 
   },
   { 
     label: "Kitchen Ops", 
     items: [
       { title: "POS", url: "/dashboard/pos", icon: ShoppingCart, permission: "menu:sales" }, 
-      { title: "Kitchen Display", url: "/dashboard/kitchen", icon: ClipboardList, permission: "menu:kitchen" }, 
-      { title: "Table Management", url: "/dashboard/tables", icon: LayoutDashboard, permission: "menu:tables" }, 
-      { title: "Reservations", url: "/dashboard/reservations", icon: CalendarCheck, permission: "menu:reservations" }
+      { title: "Kitchen Display", url: "/dashboard/restaurant/kitchen", icon: ClipboardList, permission: "menu:kitchen" }, 
+      { title: "Table Management", url: "/dashboard/restaurant/tables", icon: LayoutDashboard, permission: "menu:tables" }, 
+      { title: "Reservations", url: "/dashboard/customers", icon: CalendarCheck, permission: "menu:reservations" }
     ] 
   },
   { 
     label: "Inventory", 
     items: [
       { title: "Ingredients", url: "/dashboard/inventory/products", icon: Package, permission: "menu:inventory" }, 
-      { title: "Recipes", url: "/dashboard/recipes", icon: FileText, permission: "menu:recipes" }, 
+      { title: "Recipes", url: "/dashboard/inventory/products", icon: FileText, permission: "menu:recipes" }, 
       { title: "Suppliers", url: "/dashboard/purchases/suppliers", icon: Users, permission: "menu:purchases:suppliers" }
     ] 
   },

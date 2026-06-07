@@ -19,7 +19,7 @@ export const barSidebarConfig = [
     label: "Intelligence",
     items: [
       { title: "Overview", url: "/dashboard", icon: LayoutDashboard, permission: "menu:overview" },
-      { title: "Today's Sales", url: "/dashboard/sales/today", icon: BarChart3, permission: "menu:sales" },
+      { title: "Today's Sales", url: "/dashboard/analytics", icon: BarChart3, permission: "menu:sales" },
       { title: "Revenue Summary", url: "/dashboard/analytics/revenue", icon: Wallet, permission: "menu:intelligence:analytics" },
       { title: "Low Stock Alerts", url: "/dashboard/inventory/alerts", icon: ClipboardList, permission: "menu:inventory" },
     ]
