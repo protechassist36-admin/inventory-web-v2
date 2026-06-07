@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "set PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=true && prisma migrate deploy --preview-feature --timeout 60 && next build",
+    "build": "set PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=true && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
