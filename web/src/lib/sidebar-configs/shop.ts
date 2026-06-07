@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Users, BarChart3, Settings, 
   Wallet, FileText, Truck, ShieldCheck, Activity as ActivityIcon, 
   CreditCard, Book, DollarSign, UserCheck, ClipboardList, Clock, 
-  Tag, Cpu, History, Pill, Stethoscope, Briefcase, Bell
+  Tag, Cpu, History, Pill, Stethoscope, Briefcase, Bell, Utensils, Beer, CalendarCheck
 } from "lucide-react";
 
 export const shopSidebarConfig = [

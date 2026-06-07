@@ -218,31 +218,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {group.items.map((item: any) => {
                   const isActive = pathname.startsWith(item.url) && (item.url !== "/dashboard" || pathname === "/dashboard");
                   const Icon = item.icon;
-                  return (
-                    <SidebarMenuItem key={item.title} className="relative">
-                      {isActive && (
-                        <motion.div 
-                          layoutId="active-pill"
-                          className="absolute left-[-12px] top-2 bottom-2 w-1.5 bg-primary rounded-r-full shadow-[4px_0_12px_rgba(79,70,229,0.3)] z-10"
-                        />
-                      )}
-                      <SidebarMenuButton 
-                        tooltip={item.title} 
-                        isActive={isActive}
-                        className={cn(
-                          "h-11 rounded-xl transition-all duration-300 font-bold px-4 group/btn",
-                          isActive 
-                            ? "bg-slate-900 text-white shadow-xl dark:bg-indigo-600 dark:shadow-indigo-500/20" 
-                            : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98]"
-                        )}
-                        render={<Link href={item.url} />}
-                      >
-                          <Icon className={cn("size-5 transition-transform duration-300 group-hover/btn:scale-110", isActive ? "text-white" : "text-slate-400 dark:text-slate-500 group-hover/btn:text-primary")} />
-                          <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
+
+                  // Recursive function to render items and sub-items
+                  const renderItem = (navItem: any, isSubItem = false) => {
+                     const Icon = navItem.icon;
+                     const isActive = pathname.startsWith(navItem.url) && (navItem.url !== "/dashboard" || pathname === "/dashboard");
+
+                     return (
+                      <React.Fragment key={navItem.title}>
+                        <SidebarMenuItem className={isSubItem ? "pl-4" : ""}>
+                          <SidebarMenuButton 
+                              tooltip={navItem.title} 
+                              isActive={isActive}
+                              className={cn(
+                              "h-11 rounded-xl transition-all duration-300 font-bold px-4 group/btn",
+                              isActive 
+                                  ? "bg-slate-900 text-white shadow-xl dark:bg-indigo-600 dark:shadow-indigo-500/20" 
+                                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98]"
+                              )}
+                              render={<Link href={navItem.url} />}
+                          >
+                              {Icon && <Icon className={cn("size-5 transition-transform duration-300 group-hover/btn:scale-110", isActive ? "text-white" : "text-slate-400 dark:text-slate-500 group-hover/btn:text-primary")} />}
+                              <span>{navItem.title}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        {navItem.items && navItem.items.map((subItem: any) => renderItem(subItem, true))}
+                      </React.Fragment>
+                     );
+                  };
+
+                  return renderItem(item);
                 })}
+
               </div>
             </div>
           ))}
