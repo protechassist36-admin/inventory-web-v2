@@ -318,6 +318,7 @@ export default function POSPage() {
                       onClick={() => addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1, imageUrl: p.imageUrl })}
                     >
                         <div className="relative aspect-square w-full rounded-md bg-slate-50 overflow-hidden mb-1">
+                          {console.log("POS Product Image Debug:", p.name, p.imageUrl)}
                           {p.imageUrl ? (
                             <Image src={p.imageUrl} alt={p.name} fill className="object-cover" unoptimized />
                           ) : (
@@ -325,7 +326,10 @@ export default function POSPage() {
                           )}
                         </div>
                         <span className="text-[9px] font-bold text-slate-900 uppercase text-center line-clamp-1 w-full">{p.name}</span>
-                        <span className="text-[9px] font-black text-blue-600">Le {Math.round(p.unitPrice).toLocaleString()}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[9px] font-black text-blue-600">Le {Math.round(p.unitPrice).toLocaleString()}</span>
+                          <span className="text-[8px] font-bold text-slate-400">Stock: {p.stockQuantity}</span>
+                        </div>
                     </div>
                 ))}
             </div>
