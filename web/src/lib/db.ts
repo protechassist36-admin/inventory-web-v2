@@ -7,6 +7,7 @@ export interface LocalProduct {
   unitPrice: number;
   stockQuantity: number;
   categoryId: string | null;
+  imageUrl?: string;
   metadata: any;
 }
 
