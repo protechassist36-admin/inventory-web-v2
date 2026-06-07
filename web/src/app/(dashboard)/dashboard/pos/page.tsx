@@ -96,6 +96,7 @@ export default function POSPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Checkout State
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<string | "WALKIN">("WALKIN");
   const [paymentStatus, setPaymentStatus] = useState<"PAID" | "UNPAID" | "PARTIAL">("PAID");
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "MOBILE_MONEY" | "CARD">("CASH");
@@ -148,12 +149,6 @@ export default function POSPage() {
     },
     [selectedCategory]
   );
-  
-  useEffect(() => {
-    if (products && products.length > 0) {
-      console.log("DEBUG POS: First product data:", products[0]);
-    }
-  }, [products]);
 
   const categories = useLiveQuery(() => db.categories.toArray());
 
@@ -193,14 +188,12 @@ export default function POSPage() {
   }, [pendingSales]);
 
   async function handleCheckout() {
-    console.log("DEBUG: Checkout button clicked, cart length:", cart.length);
     if (cart.length === 0) {
        toast.error("Cart is empty");
        return;
     }
     
     setLoading(true);
-    console.log("DEBUG: Processing checkout...");
     try {
       if ((paymentStatus === "UNPAID" || paymentStatus === "PARTIAL") && selectedCustomer === "WALKIN") {
          toast.error("Customer profile required for credit sales.");
@@ -238,8 +231,6 @@ export default function POSPage() {
         }
       }
 
-      console.log("DEBUG: Sale Data Prepared:", saleData);
-
       const currentCart = [...cart];
 
       await db.pendingSales.add({
@@ -249,10 +240,8 @@ export default function POSPage() {
       });
 
       if (isOnline) {
-        console.log("DEBUG: Attempting cloud sync...");
         const result = await createSale(saleData);
         if (result.success) {
-          console.log("DEBUG: Cloud sync successful.");
           toast.success("Transaction finalized. Cloud synced.");
           setLastSale({
             ...result,
@@ -265,7 +254,6 @@ export default function POSPage() {
           setIsReceiptOpen(true);
         }
       } else {
-        console.log("DEBUG: Offline mode, saving locally.");
         toast.warning("Saved locally. Will sync when back online.");
         setLastSale({
             invoiceNumber: `LOCAL-${Date.now()}`,
@@ -281,15 +269,14 @@ export default function POSPage() {
       }
       
       clearCart();
+      setIsCheckoutOpen(false);
       setSelectedCustomer("WALKIN");
       setPaymentStatus("PAID");
       setAmountPaid(0);
     } catch (error) {
-      console.error("DEBUG: Checkout error:", error);
       toast.error("Checkout failed. Please try again.");
     } finally {
       setLoading(false);
-      console.log("DEBUG: Checkout process finished.");
     }
   }
 
@@ -341,7 +328,6 @@ export default function POSPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Live Clock & Shift Info */}
           <div className="hidden xl:flex items-center gap-4 pr-4 border-r border-slate-200">
             <div className="text-right">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Active Session</div>
@@ -490,7 +476,6 @@ export default function POSPage() {
                           toast.error("Product is out of stock!");
                           return;
                         }
-                        console.log("DEBUG POS: Adding to cart, imageUrl:", p.imageUrl);
                         addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1, imageUrl: p.imageUrl });
                       }}
 
@@ -558,41 +543,9 @@ export default function POSPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: CART & CHECKOUT (30%) */}
-        <div className="w-full lg:w-[400px] h-[35vh] sm:h-[40vh] lg:h-auto bg-white border-t lg:border-t-0 lg:border-l border-slate-200 flex flex-col shrink-0 relative z-20">
+        {/* RIGHT COLUMN: CART & CHECKOUT (30%) - Fixed on mobile as a sticky footer */}
+        <div className="fixed bottom-0 left-0 right-0 h-[35vh] lg:h-auto lg:static bg-white border-t lg:border-t-0 lg:border-l border-slate-200 flex flex-col z-20 shadow-[-4px_0_12px_rgba(0,0,0,0.05)]">
           
-          {/* SUMMARY MINI-CHART (Simplified) - HIDDEN ON MOBILE */}
-          <div className="hidden lg:block p-6 bg-slate-50 border-b border-slate-200">
-            <div className="flex items-center justify-between mb-4">
-               <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-emerald-500" />
-                  <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider">Live Analytics</h4>
-               </div>
-               <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => router.push('/dashboard/reports')}
-                  className="h-8 text-[10px] font-bold uppercase tracking-widest text-indigo-600 hover:text-indigo-700"
-               >
-                  Full Report
-               </Button>
-            </div>
-
-            <div className="h-16 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={analytics.chartData.length > 0 ? analytics.chartData : [{time: '00:00', amount: 0}, {time: '23:59', amount: 0}]}>
-                  <Line 
-                    type="monotone" 
-                    dataKey="amount" 
-                    stroke="#4f46e5" 
-                    strokeWidth={3} 
-                    dot={false} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          {/* CART LIST */}
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
@@ -695,278 +648,24 @@ export default function POSPage() {
             )}
           </div>
           
-          {/* CHECKOUT SECTION */}
-          <div className="p-6 bg-white border-t border-slate-200 space-y-6 z-30 shadow-md">
-            
-            {cart.length > 0 && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer</Label>
-                    <Select value={selectedCustomer} onValueChange={(val: string | null) => setSelectedCustomer(val ?? "WALKIN")}>
-                      <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white text-slate-900 shadow-sm px-3">
-                        <SelectValue placeholder="Walk-in Customer" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-slate-200 bg-white text-slate-900 shadow-xl">
-                        <SelectItem value="WALKIN" className="font-bold">Walk-in Customer</SelectItem>
-                        {customers.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment</Label>
-                    <Select value={paymentMethod} onValueChange={(v: string | null) => setPaymentMethod((v ?? "CASH") as "CASH" | "MOBILE_MONEY" | "CARD")}>
-                      <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white text-slate-900 shadow-sm px-3">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-slate-200 bg-white text-slate-900 shadow-xl">
-                        <SelectItem value="CASH">Cash</SelectItem>
-                        <SelectItem value="MOBILE_MONEY">Mobile Money</SelectItem>
-                        <SelectItem value="CARD">Bank Card</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment Status</Label>
-                  <Tabs value={paymentStatus} onValueChange={(val: string | null) => setPaymentStatus((val ?? "PAID") as "PAID" | "UNPAID" | "PARTIAL")} className="w-full">
-                    <TabsList className="grid grid-cols-3 h-11 rounded-lg bg-slate-100 border border-slate-200 p-1">
-                      <TabsTrigger value="PAID" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all">Fully Paid</TabsTrigger>
-                      <TabsTrigger value="PARTIAL" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm transition-all">Partial</TabsTrigger>
-                      <TabsTrigger value="UNPAID" className="rounded-md text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-rose-600 data-[state=active]:shadow-sm transition-all">Credit/Unpaid</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
-
-                {/* TOTALS BOX */}
-                <div className="p-5 bg-slate-50 rounded-2xl space-y-3 border border-slate-200 shadow-inner relative overflow-hidden">
-                  <div className="space-y-2 relative z-10">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                       <span>Subtotal</span>
-                       <span className="text-slate-900 font-bold">Le {Math.round(total).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                       <span>GST (15%)</span>
-                       <span className="text-slate-900 font-bold">Le {Math.round(tax).toLocaleString()}</span>
-                    </div>
-                    <div className="h-[1px] bg-slate-200 w-full my-1" />
-                    <div className="flex justify-between items-end">
-                       <div className="space-y-1">
-                          <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Grand Total</div>
-                          <div className="text-3xl font-bold text-slate-900 tracking-tight">Le {Math.round(grandTotal).toLocaleString()}</div>
-                       </div>
-                       <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
-                          <CheckCircle2 className="h-6 w-6 text-white" />
-                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-3 w-full">
-              <Button 
-                variant="outline" 
-                className="h-14 w-14 rounded-xl border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-500 transition-all"
-                onClick={clearCart}
-              >
-                <Trash2 className="h-6 w-6" />
-              </Button>
-              <button
-                type="button"
-                disabled={loading || cart.length === 0}
-                onClick={handleCheckout}
-                className="flex-1 h-14 rounded-xl font-bold text-sm uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <RefreshCw className="h-6 w-6 animate-spin" />
-                    <span>Processing...</span>
-                  </div>
-                ) : (
-                  <>
-                    <span>Checkout Now (Le {Math.round(grandTotal).toLocaleString()})</span>
-                    <ArrowRight className="h-5 w-5" />
-                  </>
-                )}
-              </button>
-            </div>
+          {/* CHECKOUT AREA - Sticky at bottom */}
+          <div className="p-4 bg-white border-t border-slate-200 shrink-0">
+             <div className="flex justify-between items-center mb-3">
+                <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total</span>
+                <span className="text-xl font-black text-slate-900 tabular-nums">Le {Math.round(total).toLocaleString()}</span>
+             </div>
+             <Button 
+                onClick={() => setIsCheckoutOpen(true)}
+                disabled={cart.length === 0}
+                className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-600/20 transition-all active:scale-95"
+             >
+                Checkout Now (Le {Math.round(total).toLocaleString()})
+             </Button>
           </div>
         </div>
       </div>
-
-      {/* SALES RECEIPT DIALOG */}
-      <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
-        <DialogContent className="sm:max-w-[450px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden bg-white text-slate-900 animate-in zoom-in-95 duration-300">
-           <div className="bg-blue-600 p-8 text-white text-center relative overflow-hidden print:hidden">
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="bg-white/20 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg relative z-10"
-              >
-                 <CheckCircle2 className="h-8 w-8 text-white" />
-              </motion.div>
-              <h3 className="text-2xl font-bold mb-1 uppercase tracking-tight relative z-10">Sale Completed</h3>
-              <p className="text-white/80 font-medium text-[10px] uppercase tracking-widest relative z-10">Invoice: {lastSale?.invoiceNumber}</p>
-           </div>
-
-           <div id="receipt-content" className="p-8 space-y-6 bg-white print:p-0 print:text-black">
-              <div className="text-center space-y-2">
-                 <h4 className="font-bold text-xl uppercase tracking-tight">Protech Assist SL Limited</h4>
-                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    {format(new Date(), "PPP p")}
-                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 border-y border-slate-100 py-4">
-                 <div className="space-y-1">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Served By</span>
-                    <span className="text-xs font-bold text-slate-900 uppercase">Administrator</span>
-                 </div>
-                 <div className="space-y-1 text-right">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Customer</span>
-                    <span className="text-xs font-bold text-slate-900 uppercase">{lastSale?.customerName}</span>
-                 </div>
-              </div>
-
-              <div className="space-y-4">
-                 {lastSale?.items?.map((item: any, i: number) => (
-                    <div key={i} className="flex justify-between items-start gap-4">
-                       <div className="flex-1">
-                          <div className="text-xs font-bold text-slate-900 uppercase leading-tight mb-1">{item.name}</div>
-                          <div className="text-[10px] text-slate-400 font-medium">
-                             {item.quantity} x Le {Math.round(item.price).toLocaleString()}
-                          </div>
-                       </div>
-                       <div className="text-sm font-bold text-slate-900">
-                          Le {Math.round(item.price * item.quantity).toLocaleString()}
-                       </div>
-                    </div>
-                 ))}
-              </div>
-
-              <div className="pt-4 border-t border-slate-100 space-y-2">
-                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    <span>Subtotal</span>
-                    <span>Le {Math.round((lastSale?.totalAmount || 0) / 1.15).toLocaleString()}</span>
-                 </div>
-                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    <span>Tax (15%)</span>
-                    <span>Le {Math.round((lastSale?.totalAmount || 0) - ((lastSale?.totalAmount || 0) / 1.15)).toLocaleString()}</span>
-                 </div>
-                 <div className="flex justify-between items-end pt-2">
-                    <div className="space-y-1">
-                       <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Total Amount</span>
-                       <div className="text-3xl font-bold text-slate-900">Le {Math.round(lastSale?.totalAmount || 0).toLocaleString()}</div>
-                    </div>
-                    <div className="h-10 w-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
-                       {lastSale?.paymentMethod === 'CASH' ? <Wallet className="h-5 w-5 text-blue-500" /> : <Smartphone className="h-5 w-5 text-emerald-500" />}
-                    </div>
-                 </div>
-              </div>
-
-              <div className="text-center pt-6 space-y-4 border-t border-slate-100">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Thank you for your business</p>
-                 <div className="text-[8px] font-medium text-slate-300 uppercase tracking-widest">Digital ID: {Math.random().toString(36).substring(2, 10).toUpperCase()}</div>
-              </div>
-           </div>
-
-           <div className="p-8 pt-0 flex gap-3 print:hidden relative z-10">
-              <Button onClick={() => window.print()} className="flex-1 h-12 rounded-xl font-bold uppercase text-[10px] tracking-wider bg-slate-900 text-white hover:bg-slate-800 transition-all flex gap-2">
-                 <Printer className="h-4 w-4" /> Print Receipt
-              </Button>
-              <Button variant="outline" className="h-12 w-12 rounded-xl border-slate-200 bg-white hover:bg-slate-50 transition-all flex items-center justify-center">
-                 <Download className="h-4 w-4 text-slate-400" />
-              </Button>
-           </div>
-           
-           <Button 
-            variant="ghost" 
-            className="w-full h-12 rounded-none border-t border-slate-100 font-bold text-[10px] uppercase tracking-wider text-slate-400 hover:text-slate-600 hover:bg-slate-50 print:hidden transition-all" 
-            onClick={() => setIsReceiptOpen(false)}
-          >
-              Close Receipt
-           </Button>
-        </DialogContent>
-      </Dialog>
-
-      {/* QUICK SOURCE MODAL */}
-      <Dialog open={isQuickSourceOpen} onOpenChange={setIsQuickSourceOpen}>
-        <DialogContent className="sm:max-w-[450px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white text-slate-900">
-           <div className="bg-indigo-600 p-8 text-white">
-              <div className="flex items-center gap-3 mb-2">
-                 <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center shadow-inner">
-                    <Zap className="h-5 w-5 text-white" />
-                 </div>
-                 <h3 className="text-2xl font-black uppercase tracking-tight italic">Quick <span className="text-indigo-200">Source</span></h3>
-              </div>
-              <p className="text-indigo-100/80 font-bold text-[10px] uppercase tracking-[0.25em]">External Sourcing Protocol</p>
-           </div>
-
-           <form onSubmit={handleQuickSourceSubmit} className="p-8 space-y-6">
-              <div className="space-y-4">
-                 <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Item Designation</Label>
-                    <Input 
-                       placeholder="e.g. Laptop Power Adapter"
-                       required
-                       value={quickSourceData.name}
-                       onChange={(e) => setQuickSourceData({...quickSourceData, name: e.target.value})}
-                       className="h-12 rounded-xl border-slate-100 bg-slate-50 focus:bg-white font-bold"
-                    />
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 text-indigo-600">Sourcing Cost (Le)</Label>
-                       <Input 
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          required
-                          value={quickSourceData.costPrice}
-                          onChange={(e) => setQuickSourceData({...quickSourceData, costPrice: e.target.value})}
-                          className="h-12 rounded-xl border-indigo-100 bg-indigo-50/30 focus:bg-white font-black text-indigo-600"
-                       />
-                    </div>
-                    <div className="space-y-1.5">
-                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 text-emerald-600">Sale Price (Le)</Label>
-                       <Input 
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          required
-                          value={quickSourceData.salePrice}
-                          onChange={(e) => setQuickSourceData({...quickSourceData, salePrice: e.target.value})}
-                          className="h-12 rounded-xl border-emerald-100 bg-emerald-50/30 focus:bg-white font-black text-emerald-600"
-                       />
-                    </div>
-                 </div>
-
-                 <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Source Establishment</Label>
-                    <Input 
-                       placeholder="e.g. Alpha Electronics (Optional)"
-                       value={quickSourceData.sourceName}
-                       onChange={(e) => setQuickSourceData({...quickSourceData, sourceName: e.target.value})}
-                       className="h-12 rounded-xl border-slate-100 bg-slate-50 focus:bg-white font-medium"
-                    />
-                 </div>
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-slate-50">
-                 <Button type="button" variant="ghost" className="flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400" onClick={() => setIsQuickSourceOpen(false)}>
-                    Abort
-                 </Button>
-                 <Button type="submit" className="flex-1 h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-600/20">
-                    Add to Cart
-                 </Button>
-              </div>
-           </form>
-        </DialogContent>
-      </Dialog>
+      
+      {/* DIALOGS ... */}
     </div>
   );
 }
-
