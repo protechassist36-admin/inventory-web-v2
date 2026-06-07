@@ -51,6 +51,9 @@ import { restaurantSidebarConfig } from "@/lib/sidebar-configs/restaurant";
 import { pharmacySidebarConfig } from "@/lib/sidebar-configs/pharmacy";
 import { supermarketSidebarConfig } from "@/lib/sidebar-configs/supermarket";
 import { shopSidebarConfig } from "@/lib/sidebar-configs/shop";
+import { boutiqueSidebarConfig } from "@/lib/sidebar-configs/boutique";
+import { electronicsSidebarConfig } from "@/lib/sidebar-configs/electronics";
+import { warehouseSidebarConfig } from "@/lib/sidebar-configs/warehouse";
 
 // Helper to get config
 const getSidebarConfig = (type: string) => {
@@ -60,6 +63,9 @@ const getSidebarConfig = (type: string) => {
     case "PHARMACY": return pharmacySidebarConfig;
     case "SUPERMARKET": return supermarketSidebarConfig;
     case "SHOP": return shopSidebarConfig;
+    case "BOUTIQUE": return boutiqueSidebarConfig;
+    case "ELECTRONICS": return electronicsSidebarConfig;
+    case "WAREHOUSE": return warehouseSidebarConfig;
     default: return null; 
   }
 };
