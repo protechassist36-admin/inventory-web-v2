@@ -215,155 +215,157 @@ export default function ProductsPage() {
                  <Plus className="h-4 w-4" /> New Asset
                </Button>
              } />
-             <DialogContent className="sm:max-w-[600px] rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden">
-               <div className="bg-slate-900 p-8 text-white">
+             <DialogContent className="sm:max-w-[700px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
+               <div className="bg-slate-900 p-8 text-white shrink-0">
                   <h3 className="text-2xl font-black uppercase tracking-tight">
                     {editingProduct ? "Modify Asset" : "Deploy New Asset"}
                   </h3>
                   <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] mt-1">Inventory Intelligence Update</p>
                </div>
-               <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                 <div className="grid grid-cols-2 gap-6">
-                   <div className="space-y-2">
-                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Asset Type</Label>
-                     <Select 
-                       value={formData.type} 
-                       onValueChange={(val: any) => setFormData({ ...formData, type: val })}
-                     >
-                       <SelectTrigger className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold">
-                         <SelectValue />
-                       </SelectTrigger>
-                       <SelectContent className="rounded-xl border-slate-100">
-                         <SelectItem value="PRODUCT">Physical Product</SelectItem>
-                         <SelectItem value="SERVICE">Professional Service</SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </div>
-                   <div className="space-y-2 flex items-center justify-between p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
-                     <div className="space-y-0.5">
-                        <Label className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Network Exchange</Label>
-                        <p className="text-[9px] text-indigo-500 font-bold leading-tight">Allow other businesses to source this item</p>
+               <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden bg-white">
+                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                   <div className="grid grid-cols-2 gap-6">
+                     <div className="space-y-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Asset Type</Label>
+                       <Select 
+                         value={formData.type} 
+                         onValueChange={(val: any) => setFormData({ ...formData, type: val })}
+                       >
+                         <SelectTrigger className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent className="rounded-xl border-slate-100">
+                           <SelectItem value="PRODUCT">Physical Product</SelectItem>
+                           <SelectItem value="SERVICE">Professional Service</SelectItem>
+                         </SelectContent>
+                       </Select>
                      </div>
-                     <input 
-                       type="checkbox"
-                       checked={formData.isNetworkAvailable}
-                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, isNetworkAvailable: e.target.checked })}
-                       className="h-5 w-5 rounded-lg border-indigo-200 text-indigo-600 focus:ring-indigo-500"
-                     />
-                   </div>
-                   <div className="space-y-2 col-span-2">
-                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Imagery</Label>
-                     <ImageUploader 
-                       value={formData.imageUrl} 
-                       onChange={(url) => setFormData({...formData, imageUrl: url})} 
-                       uploadAction={uploadProductImage}
-                     />
-                   </div>
-                   <div className="space-y-2 col-span-2">
-                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Designation</Label>
-                     <Input
-                       value={formData.name}
-                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
-                       placeholder={isBar ? "e.g. Star Beer 600ml" : "Enter designation"}
-                       className="h-12 rounded-xl border-slate-100 bg-slate-50 focus:bg-white font-bold"
-                       required
-                     />
-                   </div>
-                   <div className="space-y-2">
-                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">SKU / Signature</Label>
-                     <Input
-                       value={formData.sku}
-                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, sku: e.target.value })}
-                       placeholder="Scan or enter ID"
-                       className="h-12 rounded-xl border-slate-100 bg-slate-50 focus:bg-white font-mono text-xs"
-                     />
-                   </div>
-                   <div className="space-y-2">
-                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Classification</Label>
-                     <Select 
-                       value={formData.categoryId || ""} 
-                       onValueChange={(val: string | null) => setFormData({ ...formData, categoryId: val ?? "" })}
-                     >
-                       <SelectTrigger className="h-12 rounded-xl border-slate-100 bg-slate-50">
-                         <SelectValue placeholder="Categorize item" />
-                       </SelectTrigger>
-                       <SelectContent className="rounded-xl border-slate-100">
-                         <SelectItem value="none">Uncategorized</SelectItem>
-                         {categories.map((c: any) => (
-                           <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
-                   </div>
-                   <div className="space-y-2">
-                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                       Cost Price (Le)
-                     </Label>
-                     <Input
-                       type="number"
-                       step="0.01"
-                       value={formData.costPrice}
-                       onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                       placeholder="0.00"
-                       className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black text-rose-600 text-lg"
-                       required
-                     />
-                   </div>
-                   <div className="space-y-2">
-                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                       {formData.type === "SERVICE" ? "Rate per Hour/Unit (Le)" : "Selling Price (Le)"}
-                     </Label>
-                     <Input
-                       type="number"
-                       step="0.01"
-                       value={formData.unitPrice}
-                       onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
-                       placeholder="0.00"
-                       className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black text-primary text-lg"
-                       required
-                     />
-                   </div>
-                   {formData.type === "PRODUCT" && (
-                    <div className="space-y-2 animate-in slide-in-from-left-2 duration-300">
-                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">In-Stock Volume</Label>
-                      <Input
-                        type="number"
-                        value={formData.stockQuantity}
-                        onChange={(e) => setFormData({ ...formData, stockQuantity: e.target.value })}
-                        placeholder="0"
-                        className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black"
-                        required
-                      />
-                    </div>
-                   )}
-                   {isPharmacy && (
-                     <>
-                       <div className="space-y-2">
-                         <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expiration Lifecycle</Label>
-                         <Input
-                           type="date"
-                           value={formData.expiryDate}
-                           onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-                           className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold"
-                         />
+                     <div className="space-y-2 flex items-center justify-between p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                       <div className="space-y-0.5">
+                          <Label className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Network Exchange</Label>
+                          <p className="text-[9px] text-indigo-500 font-bold leading-tight">Allow other businesses to source this item</p>
                        </div>
-                       <div className="space-y-2">
-                         <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Batch Identifier</Label>
-                         <Input
-                           value={formData.batchNumber}
-                           onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
-                           placeholder="B-00000"
-                           className="h-12 rounded-xl border-slate-100 bg-slate-50 font-mono text-xs"
-                         />
-                       </div>
-                     </>
-                   )}
+                       <input 
+                         type="checkbox"
+                         checked={formData.isNetworkAvailable}
+                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, isNetworkAvailable: e.target.checked })}
+                         className="h-5 w-5 rounded-lg border-indigo-200 text-indigo-600 focus:ring-indigo-500"
+                       />
+                     </div>
+                     <div className="space-y-2 col-span-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Imagery</Label>
+                       <ImageUploader 
+                         value={formData.imageUrl} 
+                         onChange={(url) => setFormData({...formData, imageUrl: url})} 
+                         uploadAction={uploadProductImage}
+                       />
+                     </div>
+                     <div className="space-y-2 col-span-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Designation</Label>
+                       <Input
+                         value={formData.name}
+                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
+                         placeholder={isBar ? "e.g. Star Beer 600ml" : "Enter designation"}
+                         className="h-12 rounded-xl border-slate-100 bg-slate-50 focus:bg-white font-bold"
+                         required
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">SKU / Signature</Label>
+                       <Input
+                         value={formData.sku}
+                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, sku: e.target.value })}
+                         placeholder="Scan or enter ID"
+                         className="h-12 rounded-xl border-slate-100 bg-slate-50 focus:bg-white font-mono text-xs"
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Classification</Label>
+                       <Select 
+                         value={formData.categoryId || ""} 
+                         onValueChange={(val: string | null) => setFormData({ ...formData, categoryId: val ?? "" })}
+                       >
+                         <SelectTrigger className="h-12 rounded-xl border-slate-100 bg-slate-50">
+                           <SelectValue placeholder="Categorize item" />
+                         </SelectTrigger>
+                         <SelectContent className="rounded-xl border-slate-100">
+                           <SelectItem value="none">Uncategorized</SelectItem>
+                           {categories.map((c: any) => (
+                             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                     </div>
+                     <div className="space-y-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                         Cost Price (Le)
+                       </Label>
+                       <Input
+                         type="number"
+                         step="0.01"
+                         value={formData.costPrice}
+                         onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                         placeholder="0.00"
+                         className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black text-rose-600 text-lg"
+                         required
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                         {formData.type === "SERVICE" ? "Rate per Hour/Unit (Le)" : "Selling Price (Le)"}
+                       </Label>
+                       <Input
+                         type="number"
+                         step="0.01"
+                         value={formData.unitPrice}
+                         onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
+                         placeholder="0.00"
+                         className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black text-primary text-lg"
+                         required
+                       />
+                     </div>
+                     {formData.type === "PRODUCT" && (
+                      <div className="space-y-2 animate-in slide-in-from-left-2 duration-300">
+                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">In-Stock Volume</Label>
+                        <Input
+                          type="number"
+                          value={formData.stockQuantity}
+                          onChange={(e) => setFormData({ ...formData, stockQuantity: e.target.value })}
+                          placeholder="0"
+                          className="h-12 rounded-xl border-slate-100 bg-slate-50 font-black"
+                          required
+                        />
+                      </div>
+                     )}
+                     {isPharmacy && (
+                       <>
+                         <div className="space-y-2">
+                           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expiration Lifecycle</Label>
+                           <Input
+                             type="date"
+                             value={formData.expiryDate}
+                             onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                             className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold"
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Batch Identifier</Label>
+                           <Input
+                             value={formData.batchNumber}
+                             onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
+                             placeholder="B-00000"
+                             className="h-12 rounded-xl border-slate-100 bg-slate-50 font-mono text-xs"
+                           />
+                         </div>
+                       </>
+                     )}
+                   </div>
                  </div>
-                 <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                 <div className="flex justify-end gap-3 p-8 border-t border-slate-100 shrink-0 bg-slate-50/50">
                    <Button type="button" variant="ghost" className="h-12 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400" onClick={() => setIsDialogOpen(false)}>
                      Abort
                    </Button>
-                   <Button type="submit" className="h-12 px-10 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl">
+                   <Button type="submit" className="h-12 px-10 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl active:scale-95 transition-all">
                      {editingProduct ? "Finalize Update" : "Deploy to Vault"}
                    </Button>
                  </div>
