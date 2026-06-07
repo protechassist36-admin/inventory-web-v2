@@ -5,6 +5,7 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  imageUrl?: string;
   isExternal?: boolean;
   externalSourceName?: string;
   externalCostPrice?: number;

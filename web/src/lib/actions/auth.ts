@@ -6,7 +6,7 @@ import { BusinessType } from "@prisma/client";
 import { generateVerificationToken, sendVerificationEmail } from "@/lib/mail";
 
 export async function registerBusiness(data: any) {
-  const { businessName, email, password, businessType, plan } = data;
+  const { businessName, email, password, businessType, plan, logoUrl } = data;
 
   // Hash password
   const passwordHash = await bcrypt.hash(password, 10);
@@ -25,6 +25,7 @@ export async function registerBusiness(data: any) {
         type: businessType as BusinessType,
         plan: plan,
         status: "PENDING",
+        logoUrl: logoUrl,
         enabledModules: ["POS", "INVENTORY"],
         trialStartDate: new Date(),
         trialEndDate: trialEndDate,
@@ -74,10 +75,13 @@ export async function registerBusiness(data: any) {
   return result;
 }
 
-export async function getBusinessName(businessId: string) {
+export async function getBusinessContext(businessId: string) {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { name: true },
+    select: { name: true, logoUrl: true },
   });
-  return business?.name || "Global Admin";
+  return {
+    name: business?.name || "Global Admin",
+    logoUrl: business?.logoUrl || null
+  };
 }

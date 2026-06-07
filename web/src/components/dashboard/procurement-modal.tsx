@@ -48,6 +48,7 @@ import { createPurchase } from "@/lib/actions/purchase";
 import { getProducts } from "@/lib/actions/product";
 import { getSuppliers } from "@/lib/actions/supplier";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const itemSchema = z.object({
   productId: z.string().min(1, "Product is required"),
@@ -254,8 +255,12 @@ export function ProcurementModal({
                       {products.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                              <Package size={14} className="text-slate-500" />
+                            <div className="relative h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+                              {p.imageUrl ? (
+                                <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
+                              ) : (
+                                <Package size={14} className="text-slate-500" />
+                              )}
                             </div>
                             <div className="flex flex-col">
                               <span className="font-black text-xs uppercase">{p.name}</span>

@@ -58,12 +58,12 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { getBusinessName } from "@/lib/actions/auth";
+import { getBusinessContext } from "@/lib/actions/auth";
 import { motion } from "framer-motion";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession();
-  const [businessName, setBusinessName] = React.useState("Loading...");
+  const [businessContext, setBusinessContext] = React.useState({ name: "Loading...", logoUrl: null as string | null });
   const [mounted, setMounted] = React.useState(false);
   const pathname = usePathname();
   const businessType = session?.user?.businessType || "SHOP";
@@ -71,9 +71,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   React.useEffect(() => {
     setMounted(true);
     if (session?.user?.businessId) {
-      getBusinessName(session.user.businessId).then(setBusinessName);
+      getBusinessContext(session.user.businessId).then(setBusinessContext);
     } else {
-      setBusinessName("Global Admin");
+      setBusinessContext({ name: "Global Admin", logoUrl: null });
     }
   }, [session]);
 
@@ -285,7 +285,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               render={<Link href="/dashboard" className="flex items-center gap-3" />}
             >
                 <div className="relative flex aspect-square size-10 items-center justify-center overflow-hidden rounded-2xl shadow-xl shadow-primary/20 ring-4 ring-primary/5">
-                  <Image src="/images/logo2.jpeg" alt="Logo" fill className="object-cover" />
+                  <Image src={businessContext.logoUrl || "/images/logo2.jpeg"} alt="Logo" fill className="object-cover" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-black text-lg text-slate-900 dark:text-white tracking-tighter">Protech <span className="text-primary italic">Assist</span></span>
@@ -300,9 +300,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <div className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em]">Context</div>
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
            </div>
-           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-inner group cursor-pointer transition-all hover:border-primary/20">
-              <span className="text-xs font-black text-slate-900 dark:text-white truncate block group-hover:text-primary transition-colors">{businessName}</span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">{businessType} UNIT</span>
+           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-inner group cursor-pointer transition-all hover:border-primary/20 flex items-center gap-3">
+              {businessContext.logoUrl && (
+                <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                  <Image src={businessContext.logoUrl} alt="Logo" fill className="object-cover" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-black text-slate-900 dark:text-white truncate block group-hover:text-primary transition-colors">{businessContext.name}</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">{businessType} UNIT</span>
+              </div>
            </div>
         </div>
       </SidebarHeader>

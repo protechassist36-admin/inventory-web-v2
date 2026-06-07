@@ -35,6 +35,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { uploadProductImage } from "@/lib/actions/upload";
+import Image from "next/image";
 import { toast } from "sonner";
 import {
   getProducts,
@@ -254,6 +256,7 @@ export default function ProductsPage() {
                      <ImageUploader 
                        value={formData.imageUrl} 
                        onChange={(url) => setFormData({...formData, imageUrl: url})} 
+                       uploadAction={uploadProductImage}
                      />
                    </div>
                    <div className="space-y-2 col-span-2">
@@ -438,8 +441,12 @@ export default function ProductsPage() {
                 <TableRow key={product.id} className="hover:bg-slate-50/50 border-slate-50 h-20 group transition-all duration-300">
                   <TableCell className="pl-8">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-inner group-hover:bg-primary/10 group-hover:scale-110 transition-all duration-500">
-                        <Package className="h-6 w-6 text-slate-400 group-hover:text-primary transition-colors" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-inner group-hover:bg-primary/10 group-hover:scale-110 transition-all duration-500 overflow-hidden">
+                        {product.imageUrl ? (
+                          <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                        ) : (
+                          <Package className="h-6 w-6 text-slate-400 group-hover:text-primary transition-colors" />
+                        )}
                       </div>
                       <div className="flex flex-col">
                         <span className="font-black text-slate-800 dark:text-white text-sm group-hover:text-primary transition-colors">{product.name}</span>

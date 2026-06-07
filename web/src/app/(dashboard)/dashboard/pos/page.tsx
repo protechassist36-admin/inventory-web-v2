@@ -47,6 +47,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { createSale } from "@/lib/actions/sale";
 import { getCustomers } from "@/lib/actions/customer";
 import { 
@@ -481,17 +482,20 @@ export default function POSPage() {
                           toast.error("Product is out of stock!");
                           return;
                         }
-                        addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1 });
+                        addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1, imageUrl: p.imageUrl });
                       }}
                       >
                         <div className="aspect-square bg-slate-50 rounded-md sm:rounded-lg mb-1.5 sm:mb-2 flex items-center justify-center relative overflow-hidden">
-                          <Package className="h-5 w-5 sm:h-8 sm:w-8 text-slate-200 group-hover:text-blue-200 transition-colors" />
-                          <div className="absolute top-1 left-1 bg-slate-900 text-white text-[7px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">Stock: {p.stockQuantity}</div>
+                          {p.imageUrl ? (
+                            <Image src={p.imageUrl} alt={p.name} fill className="object-cover transition-transform group-hover:scale-110" />
+                          ) : (
+                            <Package className="h-5 w-5 sm:h-8 sm:w-8 text-slate-200 group-hover:text-blue-200 transition-colors" />
+                          )}
+                          <div className="absolute top-1 left-1 bg-slate-900/80 backdrop-blur-sm text-white text-[7px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded uppercase z-10">Stock: {p.stockQuantity}</div>
                           {p.stockQuantity <= 5 && (
-                             <div className="absolute top-1 right-1 bg-rose-500 text-white text-[7px] sm:text-[8px] font-bold px-1 py-0.5 rounded uppercase">Low</div>
+                             <div className="absolute top-1 right-1 bg-rose-500 text-white text-[7px] sm:text-[8px] font-bold px-1 py-0.5 rounded uppercase z-10">Low</div>
                            )}
                         </div>
-
                         <div className="flex-1 flex flex-col">
                           <h3 className="font-bold text-[9px] sm:text-[11px] text-slate-900 uppercase tracking-tight line-clamp-2 leading-tight mb-1">{p.name}</h3>
                           <div className="mt-auto">
@@ -511,10 +515,14 @@ export default function POSPage() {
                     whileTap={{ scale: 0.99 }}
                     key={p.id} 
                     className="flex items-center gap-2 sm:gap-4 p-1.5 sm:p-3 bg-white rounded-lg sm:rounded-xl border border-slate-200 cursor-pointer group transition-all"
-                    onClick={() => addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1 })}
+                    onClick={() => addItem({ id: p.id, name: p.name, price: p.unitPrice, quantity: 1, imageUrl: p.imageUrl })}
                   >
-                     <div className="h-8 w-8 sm:h-12 sm:w-12 bg-slate-50 rounded-md sm:rounded-lg flex items-center justify-center shrink-0 border border-slate-100">
-                        <Package className="h-4 w-4 sm:h-6 sm:w-6 text-slate-200" />
+                     <div className="relative h-8 w-8 sm:h-12 sm:w-12 bg-slate-50 rounded-md sm:rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden">
+                        {p.imageUrl ? (
+                          <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
+                        ) : (
+                          <Package className="h-4 w-4 sm:h-6 sm:w-6 text-slate-200" />
+                        )}
                      </div>
                      <div className="flex-1 min-w-0">
                         <div className="font-bold text-slate-900 uppercase text-[9px] sm:text-xs truncate">{p.name}</div>
@@ -596,20 +604,29 @@ export default function POSPage() {
                       className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm space-y-3 group"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                             <h6 className="font-bold text-slate-900 uppercase tracking-tight text-[11px] leading-tight truncate">{item.name}</h6>
-                             {item.isExternal && (
-                                <Badge variant="outline" className="h-4 px-1.5 rounded bg-indigo-50 text-indigo-600 border-indigo-100 text-[8px] font-black uppercase tracking-tighter shrink-0">External</Badge>
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="relative h-10 w-10 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200">
+                             {item.imageUrl ? (
+                               <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                             ) : (
+                               <Package size={16} className="text-slate-300 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                              )}
                           </div>
-                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                             Le {Math.round(item.price).toLocaleString()} per unit
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                               <h6 className="font-bold text-slate-900 uppercase tracking-tight text-[11px] leading-tight truncate">{item.name}</h6>
+                               {item.isExternal && (
+                                  <Badge variant="outline" className="h-4 px-1.5 rounded bg-indigo-50 text-indigo-600 border-indigo-100 text-[8px] font-black uppercase tracking-tighter shrink-0">External</Badge>
+                               )}
+                            </div>
+                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                               Le {Math.round(item.price).toLocaleString()} per unit
+                            </div>
                           </div>
                         </div>
                         <button 
                           onClick={() => removeItem(item.id)}
-                          className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center"
+                          className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center flex-shrink-0"
                         >
                           <X size={14} />
                         </button>

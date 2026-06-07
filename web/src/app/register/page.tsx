@@ -16,6 +16,8 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import { registerBusiness } from "@/lib/actions/auth";
+import { ImageUploader } from "@/components/ui/image-uploader";
+import { uploadBusinessLogo } from "@/lib/actions/upload";
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
@@ -27,6 +29,7 @@ export default function RegisterPage() {
     password: "",
     businessType: "SHOP",
     plan: "FREE",
+    logoUrl: "",
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -69,6 +72,14 @@ export default function RegisterPage() {
                     <SelectItem value="PREMIUM">Premium Plan (Le 300/mo)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="logo" className="text-xs font-black uppercase text-slate-500">Business Logo (Optional)</Label>
+                <ImageUploader 
+                  value={formData.logoUrl} 
+                  onChange={(url) => setFormData({...formData, logoUrl: url})} 
+                  uploadAction={uploadBusinessLogo}
+                />
               </div>
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="businessName" className="text-xs font-black uppercase text-slate-500">Business Name</Label>
