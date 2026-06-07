@@ -1,103 +1,41 @@
 "use server";
 
-import { writeFile } from "fs/promises";
-import path from "path";
-import sharp from "sharp";
-import fs from "fs";
+import cloudinary from "@/lib/cloudinary";
 
-async function processAndSaveImage(file: File, subDir: string) {
+async function uploadToCloudinary(file: File, folder: string, removeBackground = false) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
+  const base64Image = `data:${file.type};base64,${Buffer.from(buffer).toString("base64")}`;
 
-  // Advanced Processing with Sharp
-  // 1. We create a high-quality product image
-  // 2. We attempt to remove very light backgrounds (studio style) if it's a product
-  
-  let sharpPipeline = sharp(buffer);
-  
-  if (subDir === "products") {
-    try {
-      // For products, we try to create a clean 'floating' look
-      const mask = await sharp(buffer)
-        .threshold(245) 
-        .negate()       
-        .toBuffer();
+  const uploadOptions: any = {
+    folder: `inventory/${folder}`,
+    resource_type: "image",
+    transformation: [
+      { width: 800, height: 800, crop: "fill", gravity: "auto" },
+      { fetch_format: "webp", quality: "auto:best" }
+    ],
+  };
 
-      sharpPipeline = sharp(buffer)
-        .ensureAlpha()
-        .joinChannel(mask) 
-        .trim();           
-    } catch (err) {
-      console.error("Advanced processing failed, falling back to standard:", err);
-      sharpPipeline = sharp(buffer); // Fallback
-    }
+  if (removeBackground) {
+    uploadOptions.background_removal = "cloudinary_ai";
   }
 
-  const processedBuffer = await sharpPipeline
-    .resize(800, 800, { 
-      fit: "contain",    // Don't crop the product
-      background: { r: 0, g: 0, b: 0, alpha: 0 } // Transparent background
-    })
-    .webp({ quality: 85 })
-    .toBuffer();
-
-  const fileName = `${Date.now()}-${file.name.split('.')[0].replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webp`;
-  
-  // FORCE path to be within the web/public directory
-  const rootDir = process.cwd();
-  // Ensure we are in the inventory root, then look for web/public
-  const publicPath = path.join(rootDir, "web", "public", "uploads", subDir);
-
-  console.log(`DEBUG: Forcing upload path to: ${publicPath}`);
-  
-  // Ensure directory exists
-  if (!fs.existsSync(publicPath)) {
-    fs.mkdirSync(publicPath, { recursive: true });
-    console.log(`DEBUG: Created DIR: ${publicPath}`);
-  }
-
-  const finalFilePath = path.join(publicPath, fileName);
-  await writeFile(finalFilePath, processedBuffer);
-  
-  // Verify file was written
-  if (fs.existsSync(finalFilePath)) {
-    console.log(`DEBUG: SUCCESS! Image saved to: ${finalFilePath}`);
-  } else {
-    console.error(`DEBUG: FAILURE! File not found after write: ${finalFilePath}`);
-  }
-
-  // Next.js serves files from the public folder automatically, so the URL
-  // should be /uploads/subDir/fileName.
-  return `/uploads/${subDir}/${fileName}`;
+  return new Promise<string>((resolve, reject) => {
+    cloudinary.uploader.upload(base64Image, uploadOptions, (error, result) => {
+      if (error) reject(error);
+      else resolve(result?.secure_url || "");
+    });
+  });
 }
 
 export async function uploadProductImage(formData: FormData) {
-  console.log("SERVER DEBUG: uploadProductImage HIT");
-  const fs = require('fs');
-  const path = require('path');
-  try {
-    fs.appendFileSync(path.join(process.cwd(), "hit.log"), `[${new Date().toISOString()}] HIT\n`);
-  } catch(e) {}
-
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file uploaded");
-
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (!allowedTypes.includes(file.type)) throw new Error("Invalid file type.");
-
-  if (file.size > 5 * 1024 * 1024) throw new Error("File too large (max 5MB)");
-
-  return await processAndSaveImage(file, "products");
+  return await uploadToCloudinary(file, "products", true);
 }
 
 export async function uploadBusinessLogo(formData: FormData) {
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file uploaded");
-
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (!allowedTypes.includes(file.type)) throw new Error("Invalid file type");
-
-  if (file.size > 2 * 1024 * 1024) throw new Error("Logo too large (max 2MB)");
-
-  return await processAndSaveImage(file, "logos");
+  return await uploadToCloudinary(file, "logos", false);
 }
