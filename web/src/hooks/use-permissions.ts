@@ -14,8 +14,8 @@ export function usePermissions() {
       return false;
     }
 
-    // 3. Super Admin bypasses all checks
-    if (session.user.role === "SUPERADMIN") return true;
+    // 3. Admin & Super Admin bypass all checks
+    if (session.user.role === "SUPERADMIN" || session.user.role === "ADMIN") return true;
 
     // 4. Check user permissions
     const userPermissions = session.user.permissions || [];

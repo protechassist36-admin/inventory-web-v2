@@ -144,8 +144,16 @@ const SidebarContentRenderer = ({
         <SidebarMenu className="gap-6 pb-8">
           {filteredNavGroups.length === 0 && (
              <div className="px-4 py-8 text-center">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No Intelligence Nodes Found</p>
-                <p className="text-[9px] text-slate-500 mt-2 italic">Check permissions or business type configuration.</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  {session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN" 
+                    ? "Neural Interface Initializing..." 
+                    : "No Intelligence Nodes Found"}
+                </p>
+                <p className="text-[9px] text-slate-500 mt-2 italic">
+                  {session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN"
+                    ? "Establishing connection to Africa trade vault..."
+                    : "Check permissions or business type configuration."}
+                </p>
              </div>
           )}
           {filteredNavGroups.map((group: NavGroup) => (
