@@ -27,7 +27,7 @@ async function main() {
   console.log(`🔍 Total Roles Found: ${roles.length}`);
   
   roles.forEach(role => {
-    console.log(`- Role: [${role.name}] | Business: [${role.business.name}] | ID: ${role.id} | Permissions: ${role._count.permissions}`);
+    console.log(`- Role: [${role.name}] | Business: [${role.business?.name ?? 'No Business'}] | ID: ${role.id} | Permissions: ${role._count.permissions}`);
   });
 
   const users = await prisma.user.findMany({
