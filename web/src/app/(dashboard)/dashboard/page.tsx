@@ -392,11 +392,11 @@ export default function DashboardPage() {
                                    </div>
                                 </div>
                              </div>
-                             <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1.5 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-50 dark:border-slate-800/50">
+                             <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-x-6 gap-y-1.5 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-50 dark:border-slate-800/50 w-full sm:w-auto">
                                 <div className="font-[1000] text-lg sm:text-xl text-slate-900 dark:text-white tracking-tighter shrink-0">
                                    Le {Math.round(parseFloat(sale.totalAmount)).toLocaleString()}
                                 </div>
-                                <div className={cn("px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[8px] sm:text-[9px] font-[1000] uppercase tracking-widest shadow-sm shrink-0", 
+                                <div className={cn("px-2.5 py-1 rounded-lg text-[9px] font-[1000] uppercase tracking-widest shadow-sm shrink-0", 
                                    sale.paymentStatus === "PAID" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400")}>
                                    {sale.paymentStatus}
                                 </div>
@@ -415,11 +415,11 @@ export default function DashboardPage() {
              animate={{ opacity: 1, x: 0 }}
              transition={{ delay: 0.9 }}
            >
-             <Card className="group border-none bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-6 sm:p-10 text-white shadow-2xl shadow-indigo-500/10 relative overflow-hidden h-full flex flex-col justify-center">
+             <Card className="group border-none bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-8 sm:p-10 text-white shadow-2xl shadow-indigo-500/10 relative overflow-hidden h-full flex flex-col justify-center">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none group-hover:scale-150 transition-transform duration-700" />
-                <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 mb-4 sm:mb-6 text-primary animate-pulse" />
-                <h3 className="text-xl sm:text-2xl font-[1000] tracking-tight mb-2 sm:mb-3 uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">Protech Forecast</h3>
-                <p className="text-slate-400 text-[9px] sm:text-[10px] font-bold leading-relaxed uppercase tracking-[0.15em] mb-6 sm:mb-8">
+                <Sparkles className="h-10 w-10 mb-6 text-primary animate-pulse shrink-0" />
+                <h3 className="text-2xl font-[1000] tracking-tight mb-3 uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50 leading-none">Protech Forecast</h3>
+                <p className="text-slate-400 text-[10px] font-bold leading-relaxed uppercase tracking-[0.15em] mb-8 max-w-sm">
                   Our neural predictive engines are analyzing your stock velocity. Upgrade to unlock advanced trade forecasting and demand simulation.
                 </p>
              <Button 
