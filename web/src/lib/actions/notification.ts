@@ -68,13 +68,29 @@ export async function createNotification(data: { title: string; message: string;
   try {
     const session = await auth();
     if (!session?.user?.businessId) return;
+    const businessId = session.user.businessId;
 
-    const id = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    
-    await globalPrisma.$executeRawUnsafe(`
-      INSERT INTO "Notification" (id, title, message, type, "isRead", "businessId", "updatedAt", "createdAt")
-      VALUES ($1, $2, $3, $4, false, $5, NOW(), NOW())
-    `, id, data.title, data.message, data.type || "INFO", session.user.businessId);
+    // Smart Alert: Check if an unread notification with this EXACT title already exists
+    const existing: any[] = await globalPrisma.$queryRawUnsafe(`
+      SELECT id FROM "Notification"
+      WHERE "businessId" = $1 AND "title" = $2 AND "isRead" = false AND "deletedAt" IS NULL
+      LIMIT 1
+    `, businessId, data.title);
+
+    if (existing.length > 0) {
+      // Update the existing notification's timestamp and message to keep it fresh
+      await globalPrisma.$executeRawUnsafe(`
+        UPDATE "Notification" SET "updatedAt" = NOW(), "message" = $1
+        WHERE id = $2
+      `, data.message, existing[0].id);
+    } else {
+      const id = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      
+      await globalPrisma.$executeRawUnsafe(`
+        INSERT INTO "Notification" (id, title, message, type, "isRead", "businessId", "updatedAt", "createdAt")
+        VALUES ($1, $2, $3, $4, false, $5, NOW(), NOW())
+      `, id, data.title, data.message, data.type || "INFO", businessId);
+    }
 
     revalidatePath("/dashboard/system/notifications");
   } catch (error) {

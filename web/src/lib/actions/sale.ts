@@ -118,9 +118,15 @@ export async function createSale(data: {
         });
 
         // 4. CHECK FOR LOW STOCK
-        if (product.stockQuantity <= product.minStockLevel) {
+        if (product.stockQuantity === 0) {
            await createNotification({
-              title: "Low Stock Alert",
+              title: `Critical Low Stock: ${product.name}`,
+              message: `Product "${product.name}" is completely out of stock.`,
+              type: "CRITICAL"
+           });
+        } else if (product.stockQuantity <= product.minStockLevel) {
+           await createNotification({
+              title: `Low Stock: ${product.name}`,
               message: `Product "${product.name}" has reached its threshold. Remaining: ${product.stockQuantity}`,
               type: "WARNING"
            });

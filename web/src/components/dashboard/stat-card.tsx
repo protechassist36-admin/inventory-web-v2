@@ -27,7 +27,7 @@ export function StatCard({ title, value, prefix = "", description, icon: Icon, c
 
   const CardContentWrapper = (
     <Card className={cn(
-        "group relative overflow-hidden border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2.5rem] p-7 shadow-sm transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1.5 active:scale-[0.98]",
+        "group relative overflow-hidden border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-7 shadow-sm transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1.5 active:scale-[0.98]",
         href && "cursor-pointer"
     )}>
         {/* Animated Glow Backdrop */}
@@ -38,14 +38,14 @@ export function StatCard({ title, value, prefix = "", description, icon: Icon, c
              <CardTitle className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">{title}</CardTitle>
              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-500">Real-time Node</p>
           </div>
-          <div className={cn("p-4 rounded-2xl transition-all duration-500 shadow-lg shadow-black/5 group-hover:scale-110 group-hover:rotate-12 group-hover:shadow-xl", bgClass)}>
-              <Icon className={cn("h-6 w-6", colorClass)} />
+          <div className={cn("p-3 sm:p-4 rounded-2xl transition-all duration-500 shadow-lg shadow-black/5 group-hover:scale-110 group-hover:rotate-12 group-hover:shadow-xl", bgClass)}>
+              <Icon className={cn("h-5 w-5 sm:h-6 sm:w-6", colorClass)} />
           </div>
         </CardHeader>
         
         <CardContent className="p-0">
           <div className="flex items-baseline gap-1.5">
-            <div className="text-3xl sm:text-4xl font-[1000] text-slate-900 dark:text-white tracking-tighter leading-none">
+            <div className="text-2xl sm:text-4xl font-[1000] text-slate-900 dark:text-white tracking-tighter leading-none">
               {prefix}<CountUp value={displayValue} />
             </div>
           </div>

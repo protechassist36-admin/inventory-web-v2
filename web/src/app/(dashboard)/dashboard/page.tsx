@@ -126,7 +126,7 @@ export default function DashboardPage() {
   const context = getContextInfo();
 
   return (
-    <div className="relative min-h-full space-y-8 md:space-y-12 p-4 sm:p-6 md:p-10 bg-slate-50/30 dark:bg-slate-950/50">
+    <div className="relative min-h-full space-y-8 md:space-y-12 py-8 sm:p-6 md:p-10 bg-slate-50/30 dark:bg-slate-950/50">
       {/* Dynamic Background Ornament */}
       <div className={cn("absolute top-0 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] rounded-full blur-[120px] opacity-[0.05] dark:opacity-[0.03] pointer-events-none", colors.primary)} />
       
@@ -266,12 +266,12 @@ export default function DashboardPage() {
           transition={{ delay: 0.6 }}
         >
            <Card className="border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2.5rem] shadow-sm overflow-hidden h-full flex flex-col">
-             <CardHeader className="p-8 pb-4">
-                <CardTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Intelligence Nodes</CardTitle>
-                <CardDescription className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">System Operational Status</CardDescription>
+             <CardHeader className="p-6 sm:p-8 pb-4">
+                <CardTitle className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Intelligence Nodes</CardTitle>
+                <CardDescription className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">System Operational Status</CardDescription>
              </CardHeader>
-             <CardContent className="p-8 pt-4 flex-1 flex flex-col justify-center space-y-6">
-                <div className="grid grid-cols-1 gap-4">
+             <CardContent className="p-6 sm:p-8 pt-4 flex-1 flex flex-col justify-center space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
                     {[
                       { 
                         label: "Active Transactions", 
@@ -295,17 +295,17 @@ export default function DashboardPage() {
                         bg: "bg-blue-50 dark:bg-blue-950/20" 
                       }
                     ].map((node, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 transition-all hover:scale-[1.02] group">
-                         <div className="flex items-center gap-4">
-                            <div className={cn("p-3 rounded-xl", node.bg)}>
-                               <node.icon className={cn("h-4 w-4", node.color)} />
+                      <div key={i} className="flex items-center justify-between p-3 sm:p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 transition-all hover:scale-[1.02] group">
+                         <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                            <div className={cn("p-2 sm:p-3 rounded-xl shrink-0", node.bg)}>
+                               <node.icon className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4", node.color)} />
                             </div>
-                            <div>
-                               <p className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest leading-none mb-1">{node.label}</p>
-                               <p className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{node.value}</p>
+                            <div className="min-w-0">
+                               <p className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest leading-none mb-1 truncate">{node.label}</p>
+                               <p className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tighter">{node.value}</p>
                             </div>
                          </div>
-                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)] shrink-0" />
                       </div>
                     ))}
                 </div>
@@ -315,7 +315,7 @@ export default function DashboardPage() {
                     toast.loading("Initializing Neural Diagnostics...");
                     setTimeout(() => router.push("/dashboard/analytics"), 1500);
                   }}
-                  className="w-full h-14 rounded-2xl bg-slate-900 text-white dark:bg-indigo-600 font-black text-[10px] uppercase tracking-[0.3em] shadow-xl transition-all hover:scale-[1.02] active:scale-95"
+                  className="w-full h-12 sm:h-14 rounded-2xl bg-slate-900 text-white dark:bg-indigo-600 font-black text-[9px] sm:text-[10px] uppercase tracking-[0.3em] shadow-xl transition-all hover:scale-[1.02] active:scale-95"
                 >
                   Launch Neural Diagnostics
                 </Button>
@@ -333,11 +333,11 @@ export default function DashboardPage() {
           className="lg:col-span-2"
         >
           <Card className="border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2.5rem] shadow-sm overflow-hidden h-full">
-             <CardHeader className="p-8 border-b border-slate-100/50 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
+             <CardHeader className="p-6 sm:p-8 border-b border-slate-100/50 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1">
-                         <CardTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Intelligence Activity</CardTitle>
-                         <CardDescription className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Live ledger stream</CardDescription>
+                         <CardTitle className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Intelligence Activity</CardTitle>
+                         <CardDescription className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Live ledger stream</CardDescription>
                       </div>
                       <Button variant="ghost" size="sm" className="rounded-xl h-10 px-4 text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-white dark:hover:bg-slate-800 self-start sm:self-auto" onClick={() => router.push("/dashboard/sales/history")}>
                          History Explorer <ArrowRight className="ml-2 h-3.5 w-3.5" />
@@ -379,24 +379,24 @@ export default function DashboardPage() {
                                setIsDetailsOpen(true);
                             }}
                           >
-                             <div className="flex items-center gap-3 sm:gap-5">
+                             <div className="flex items-center gap-3 sm:gap-5 min-w-0">
                                 <div className={cn("h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-black/[0.02] border border-white dark:border-slate-800 transition-transform duration-500 group-hover/item:scale-110 group-hover/item:rotate-3 shrink-0", colors.secondary)}>
                                    <Activity className={cn("h-4 w-4 sm:h-6 sm:w-6", colors.text)} />
                                 </div>
                                 <div className="min-w-0">
-                                   <div className="font-black text-sm sm:text-lg text-slate-900 dark:text-white tracking-tight group-hover/item:text-primary transition-colors truncate">{sale.invoiceNumber}</div>
+                                   <div className="font-black text-xs sm:text-lg text-slate-900 dark:text-white tracking-tight group-hover/item:text-primary transition-colors truncate">{sale.invoiceNumber}</div>
                                    <div className="flex items-center gap-2 sm:gap-3 text-[8px] sm:text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-0.5">
-                                      <div className="flex items-center gap-1.5"><Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {format(new Date(sale.createdAt), "HH:mm")}</div>
-                                      <div className="h-1 w-1 rounded-full bg-slate-200 dark:bg-slate-700" />
-                                      <span className="text-slate-500 font-bold italic">{sale.paymentMethod}</span>
+                                      <div className="flex items-center gap-1.5 shrink-0"><Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {format(new Date(sale.createdAt), "HH:mm")}</div>
+                                      <div className="h-1 w-1 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+                                      <span className="text-slate-500 font-bold italic truncate">{sale.paymentMethod}</span>
                                    </div>
                                 </div>
                              </div>
                              <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-x-6 gap-y-1.5 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-50 dark:border-slate-800/50 w-full sm:w-auto">
-                                <div className="font-[1000] text-lg sm:text-xl text-slate-900 dark:text-white tracking-tighter shrink-0">
+                                <div className="font-[1000] text-sm sm:text-xl text-slate-900 dark:text-white tracking-tighter shrink-0">
                                    Le {Math.round(parseFloat(sale.totalAmount)).toLocaleString()}
                                 </div>
-                                <div className={cn("px-2.5 py-1 rounded-lg text-[9px] font-[1000] uppercase tracking-widest shadow-sm shrink-0", 
+                                <div className={cn("px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[8px] sm:text-[9px] font-[1000] uppercase tracking-widest shadow-sm shrink-0", 
                                    sale.paymentStatus === "PAID" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400")}>
                                    {sale.paymentStatus}
                                 </div>
@@ -417,9 +417,9 @@ export default function DashboardPage() {
            >
              <Card className="group border-none bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-8 sm:p-10 text-white shadow-2xl shadow-indigo-500/10 relative overflow-hidden h-full flex flex-col justify-center">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none group-hover:scale-150 transition-transform duration-700" />
-                <Sparkles className="h-10 w-10 mb-6 text-primary animate-pulse shrink-0" />
-                <h3 className="text-2xl font-[1000] tracking-tight mb-3 uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50 leading-none">Protech Forecast</h3>
-                <p className="text-slate-400 text-[10px] font-bold leading-relaxed uppercase tracking-[0.15em] mb-8 max-w-sm">
+                <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 mb-4 sm:mb-6 text-primary animate-pulse shrink-0" />
+                <h3 className="text-xl sm:text-2xl font-[1000] tracking-tight mb-3 uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50 leading-none">Protech Forecast</h3>
+                <p className="text-slate-400 text-[9px] sm:text-[10px] font-bold leading-relaxed uppercase tracking-[0.15em] mb-6 sm:mb-8 max-w-sm">
                   Our neural predictive engines are analyzing your stock velocity. Upgrade to unlock advanced trade forecasting and demand simulation.
                 </p>
              <Button 
@@ -427,7 +427,7 @@ export default function DashboardPage() {
                  toast.info("Generating predictive demand models...");
                  setTimeout(() => router.push("/dashboard/analytics"), 1500);
                }}
-               className="w-full h-14 bg-primary text-white hover:bg-primary/90 font-black text-xs uppercase tracking-[0.25em] shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 mt-auto"
+               className="w-full h-12 sm:h-14 bg-primary text-white hover:bg-primary/90 font-black text-[10px] sm:text-xs uppercase tracking-[0.25em] shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 mt-auto"
              >
                Initialize Full Intelligence
              </Button>
