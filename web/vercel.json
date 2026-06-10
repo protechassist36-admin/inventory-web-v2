@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/auth/:path*",
+      "destination": "https://inventory-web-v2-1.onrender.com/api/auth/:path*"
+    }
+  ]
+}
