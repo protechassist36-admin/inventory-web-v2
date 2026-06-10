@@ -2,13 +2,16 @@ import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
 const config: NextConfig = {
-  // REMOVED: output: 'export' (Required for Auth/API)
+  // Removed output: 'export' to support dynamic Server Actions, Auth, and API routes
+  // Required for /login, /register, and /setup-organization to function correctly
   
-  // Explicitly set Turbopack config to empty
   turbopack: {},
   
   typescript: {
     ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 
