@@ -1,12 +1,18 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
+
+// Standard configuration for Neon serverless
+if (typeof window === "undefined") {
+  neonConfig.webSocketConstructor = ws;
+}
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 const connectionString = process.env.DATABASE_URL;
-const pool = new pg.Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+const pool = new Pool({ connectionString });
+const adapter = new PrismaNeon(pool);
 
 const prismaClient = new PrismaClient({
     adapter,
@@ -15,10 +21,6 @@ const prismaClient = new PrismaClient({
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prismaClient;
 
-/**
- * Creates a tenant-scoped Prisma client extension.
- * This automatically injects `businessId` filtering into all tenant-owned models.
- */
 export const getTenantPrisma = (businessId: string) => {
   return prismaClient.$extends({
     query: {
