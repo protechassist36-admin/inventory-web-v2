@@ -5,15 +5,26 @@ import { authConfig } from "./auth.config";
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
-  const session = (req as any).auth;
   const path = req.nextUrl.pathname;
+  
+  if (
+    path === "/manifest.json" ||
+    path === "/favicon.ico" ||
+    path.startsWith("/icons/") ||
+    path.startsWith("/images/") ||
+    path.startsWith("/_next/")
+  ) {
+    return NextResponse.next();
+  }
+
+  const session = (req as any).auth;
   const role = session?.user?.role;
   const businessId = session?.user?.businessId;
   
   console.log(`DEBUG: Middleware - Path: ${path}, Session exists: ${!!session}, Role: ${role}`);
 
-  // 0. Explicitly allow Auth API routes and static PWA assets
-  if (path.startsWith('/api/auth') || path === '/manifest.json' || path === '/sw.js') {
+  // 0. Explicitly allow Auth API routes
+  if (path.startsWith('/api/auth')) {
     return NextResponse.next();
   }
 
@@ -78,17 +89,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (auth routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - manifest.json (pwa manifest)
-     * - sw.js (service worker)
-     * - images/ (public images)
-     * - .*\.(?:svg|png|jpg|jpeg|gif|webp|css|js)$ (all common static assets)
-     */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|manifest.json|sw.js|images/.*|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js)$).*)',
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|manifest.json).*)",
   ],
 };
