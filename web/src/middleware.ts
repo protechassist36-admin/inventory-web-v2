@@ -77,5 +77,18 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/super-admin/:path*', '/api/:path*', '/login', '/register', '/', '/access-denied'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (auth routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - manifest.json (pwa manifest)
+     * - sw.js (service worker)
+     * - images/ (public images)
+     * - .*\.(?:svg|png|jpg|jpeg|gif|webp|css|js)$ (all common static assets)
+     */
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|manifest.json|sw.js|images/.*|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js)$).*)',
+  ],
 };
