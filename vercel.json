@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm run build --prefix web",
+  "installCommand": "npm install --legacy-peer-deps --prefix web",
+  "outputDirectory": "web/.next",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/web/$1"
+    }
+  ]
+}
