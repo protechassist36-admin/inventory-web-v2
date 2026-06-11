@@ -7,11 +7,6 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const path = req.nextUrl.pathname;
   
-  // Explicitly allow public routes if necessary, though matcher handles most
-  if (path === '/login' || path === '/register' || path === '/') {
-    return NextResponse.next();
-  }
-
   const session = (req as any).auth;
   const role = session?.user?.role;
   const businessId = session?.user?.businessId;
@@ -36,8 +31,8 @@ export default auth((req) => {
   }
 
   // 4. Enforce Business Context for non-SuperAdmins
-  if (!businessId && !path.startsWith('/register')) {
-    return NextResponse.redirect(new URL('/register', req.url));
+  if (!businessId) {
+    return NextResponse.redirect(new URL('/setup-organization', req.url));
   }
 
   return NextResponse.next();
@@ -47,7 +42,5 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/super-admin/:path*",
-    "/login",
-    "/register",
   ],
 };

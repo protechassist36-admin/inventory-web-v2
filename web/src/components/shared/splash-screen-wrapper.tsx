@@ -9,14 +9,27 @@ export function SplashScreenWrapper({ children }: { children: React.ReactNode })
 
     useEffect(() => {
         setMounted(true);
+        console.log("DEBUG: Splash mounted");
         const hasShown = sessionStorage.getItem('splash_shown');
         if (!hasShown) {
+            console.log("DEBUG: Showing splash");
             setShowSplash(true);
             const timer = setTimeout(() => {
+                console.log("DEBUG: Hiding splash (timer)");
                 setShowSplash(false);
                 sessionStorage.setItem('splash_shown', 'true');
-            }, 3500); // Reduced from 10s to 3.5s for professional feel
-            return () => clearTimeout(timer);
+            }, 3500); 
+            
+            // Fallback to force show children after 6s in case splash gets stuck
+            const fallbackTimer = setTimeout(() => {
+                console.log("DEBUG: Forcing show children (fallback)");
+                setShowSplash(false);
+            }, 6000);
+
+            return () => {
+                clearTimeout(timer);
+                clearTimeout(fallbackTimer);
+            };
         }
     }, []);
 
