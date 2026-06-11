@@ -12,6 +12,18 @@ const config: NextConfig = {
     ignoreDuringBuilds: true,
   },
   productionBrowserSourceMaps: true, // Enabled for debugging production error
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.pravatar.cc',
+      },
+    ],
+  },
 };
 
 const nextConfig = withPWA({
