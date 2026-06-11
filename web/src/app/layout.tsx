@@ -47,11 +47,11 @@ export default function RootLayout({
         >
           <AuthProvider>
             <Suspense>
-              <LoadingProvider>
-                <SplashScreenWrapper>
+              {/* <LoadingProvider>
+                <SplashScreenWrapper> */}
                   {children}
-                </SplashScreenWrapper>
-              </LoadingProvider>
+                {/* </SplashScreenWrapper>
+              </LoadingProvider> */}
             </Suspense>
             <GlobalThemeToggle />
             <InstallPWA />
