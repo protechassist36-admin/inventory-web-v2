@@ -9,6 +9,8 @@ import { GlobalThemeToggle } from "@/components/shared/global-theme-toggle";
 import { InstallPWA } from "@/components/shared/install-pwa";
 import { Toaster } from "@/components/ui/sonner";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Protech Assist | Enterprise OS",
   description: "Advanced Retail Intelligence and Inventory Management System.",
@@ -47,11 +49,11 @@ export default function RootLayout({
         >
           <AuthProvider>
             <Suspense>
-              {/* <LoadingProvider>
-                <SplashScreenWrapper> */}
+              <LoadingProvider>
+                <SplashScreenWrapper>
                   {children}
-                {/* </SplashScreenWrapper>
-              </LoadingProvider> */}
+                </SplashScreenWrapper>
+              </LoadingProvider>
             </Suspense>
             <GlobalThemeToggle />
             <InstallPWA />
